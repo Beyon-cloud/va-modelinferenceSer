@@ -1,0 +1,51 @@
+postgres_queries:
+
+    dyn_insert_query: |
+        INSERT INTO {table} ({keys}) VALUES ({values_placeholders}) RETURNING *;
+
+    dyn_select_query: |
+        SELECT {column_name} FROM {table_name}
+                WHERE {condition} {orderby_template}
+                LIMIT {limit};
+
+    order_by: ORDER BY {order_by}
+
+    empty_order_by: "{order_by}"
+
+    dyn_delete_query: |
+        DELETE FROM {table_name} WHERE {condition};
+
+    dyn_update_query: |
+        UPDATE {table_name} SET {column_name} WHERE {condition};
+
+    dyn_vector_search_query: |
+        SELECT {vector_column_name} <=> %s::vector AS similarity
+                FROM {table_name} WHERE {condition}
+                ORDER BY similarity ASC
+                LIMIT {limit};
+
+    sim_txt_search_query: |
+        SELECT VRTE_VRD_ID,VRTE_CHUNK_ID, VRTE_CHUNK_TXT,VRTE_METADATA, VRTE_EMBEDDING_1024 <=> $1 AS similarity
+                FROM VA_RAG_TXT_EMBED
+                WHERE VRTE_VRD_ID = $2
+                AND (VRTE_EMBEDDING_1024 <=> $1) < $4
+                ORDER BY similarity ASC
+                LIMIT $3;
+
+    sim_txt_search_query_distance: |
+        SELECT VRTE_VRD_ID,VRTE_CHUNK_ID, VRTE_CHUNK_TXT,VRTE_METADATA, VRTE_EMBEDDING_384 <=> $1 AS distance
+                FROM VA_RAG_TXT_EMBED
+                WHERE VRTE_VRD_ID = $2
+                ORDER BY distance ASC
+                LIMIT $3;
+
+    all_textembed_query: |
+        SELECT VRTE_EMBEDDING_384::vector, VRTE_CHUNK_TXT, VRTE_METADATA FROM VA_RAG_TXT_EMBED, VA_RAG_DOC
+                WHERE VRD_VOD_ORG_ID = $1 AND VRD_ID =VRTE_VRD_ID
+                UNION ALL
+                SELECT VRPE_EMBEDDING_384::vector, VRPE_CHUNK_TXT,VRPE_METADATA FROM VA_RAG_PDF_EMBED, VA_RAG_DOC
+                WHERE VRD_VOD_ORG_ID = $1 AND VRD_ID =VRPE_VRD_ID;
+
+    prompt_query: |
+        SELECT PROMPT_ID,DOMAIN_ID, TASK_ID, TEMPLATE, INPUT_VARIABLES, SYS_TPL, USR_TPL,OUT_TYP, PROMPT_TYP, ORG_ID
+            FROM MT_RAG_PROMPT ORDER BY DISP_SEQ ASC;

@@ -1,0 +1,158 @@
+{
+  "1": {
+    "SCHEMA_PROMPT": {
+      "*": {
+        "*": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates {output_type} Schema templates from {doc_name} document text.\n{doc_details}\nYour task is to carefully analyze the input and design a {output_type} Schema that captures ALL available\nentities mentioned in the document.\nAlways return only a valid {output_type} Schema with 'title', 'type', and 'properties'.\nNo explanation, only {output_type}.",
+          "usr_template": "Generate a {output_type} Schema for the following document text.\nInfer an appropriate 'title' from the document type or content (e.g., 'RentalAgreement', 'PropertyDeed').\nUse standard {output_type} Schema draft-07/draft-2019-09 conventions: include 'title'and 'type'.\nFor each property, provide an appropriate 'type' (string, integer, number, boolean, object, array).\nWhen a field can repeat (e.g., multiple tenants, witnesses), model it as an 'array' with an 'items' schema.\nMark fields as 'required' when they are explicitly present in the document.\nDo not invent values or add sample values\u2014only define the schema shape and constraints inferred from the text.\nIf a field's type is ambiguous, choose the most general appropriate type and note optional formats via 'format' or 'pattern'.\nReturn strictly valid {output_type} (no comments, no extra text and no revised version).\n\\n\\nDocument Text:\\n\\\"\\\"\\\"{context}\\\"\\\"\\\"",
+          "out_typ": "JSON",
+          "prompt_id": 12
+        }
+      },
+      "logistics": {
+        "invoice": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates {output_type} Schema templates from {doc_name} document text.\n{doc_details}\nYour task is to carefully analyze the input and design a {output_type} Schema that captures ALL available\nentities mentioned in the document.\nAlways return only a valid {output_type} Schema with 'title', 'type', and 'properties'.\nNo explanation, only {output_type}.",
+          "usr_template": "Generate a {output_type} Schema for the following document text.\nInfer an appropriate 'title' from the document type or content (e.g., 'RentalAgreement', 'PropertyDeed').\nUse standard {output_type} Schema draft-07/draft-2019-09 conventions: include 'title'and 'type'.\nFor each property, provide an appropriate 'type' (string, integer, number, boolean, object, array).\nWhen a field can repeat (e.g., multiple tenants, witnesses), model it as an 'array' with an 'items' schema.\nMark fields as 'required' when they are explicitly present in the document.\nDo not invent values or add sample values\u2014only define the schema shape and constraints inferred from the text.\nIf a field's type is ambiguous, choose the most general appropriate type and note optional formats via 'format' or 'pattern'.\nReturn strictly valid {output_type} (no comments, no extra text and no revised version).\n\\n\\nDocument Text:\\n\\\"\\\"\\\"{context}\\\"\\\"\\\"",
+          "out_typ": "JSON",
+          "prompt_id": 15
+        }
+      }
+    },
+    "RESP_PROMPT": {
+      "insurance": {
+        "general": {
+          "template": "You are a highly knowledgeable and precise assistant. Your goal is to provide accurate, concise, and contextually relevant answers. Use the provided context to answer the user's query clearly and factually.\\n\\nContext:\\n{context}\\n\\nQuery: {query}",
+          "input_variables": [
+            "context",
+            "query"
+          ],
+          "sys_template": "",
+          "usr_template": "",
+          "out_typ": "",
+          "prompt_id": 1
+        },
+        "instruction": {
+          "template": "You are a highly knowledgeable and precise assistant. Your goal is to provide accurate, concise, and contextually relevant answers. Use the provided context to answer the user's query clearly and factually.\\n\\nContext:\\n{context}\\n\\nQuery: {query}",
+          "input_variables": [
+            "context",
+            "query"
+          ],
+          "sys_template": "",
+          "usr_template": "",
+          "out_typ": "",
+          "prompt_id": 3
+        }
+      },
+      "general": {
+        "general": {
+          "template": "You are a highly knowledgeable and precise assistant. Your goal is to provide accurate, concise, and contextually relevant answers. Use the provided context to answer the user's query clearly and factually.\\n\\nContext:\\n{context}\\n\\nQuery: {query}",
+          "input_variables": [
+            "context",
+            "query"
+          ],
+          "sys_template": "",
+          "usr_template": "",
+          "out_typ": "",
+          "prompt_id": 4
+        },
+        "instruction": {
+          "template": "You are a retrieval-augmented assistant. \nYour task is to provide the most accurate response possible based strictly on the retrieved context.\n\nGuidelines:\n1. Use ONLY the information present in the \"Retrieved Context\". Do not invent or add outside facts.\n2. If the context does not contain the answer, reply exactly: \"Not Found\".\n3. Ensure the response directly addresses the user\u2019s question.\n4. Present the answer in a clear, concise, and structured way (bullets, numbered lists, or short paragraphs).\n5. If multiple possible answers exist, include them all with supporting evidence.\n6. When document IDs or sources are available, cite them minimally (e.g., doc1, doc2).\n7. Never output raw context \u2014 always synthesize it into a clean answer.\n\n---\n\nUser Question:\n{query}\n\nRetrieved Context:\n{context}\n\n---\n\nAnswer:\nProvide the most accurate and context-grounded answer here.\nIf no relevant information is found, output: \"Not Found\".",
+          "input_variables": [
+            "context",
+            "query"
+          ],
+          "sys_template": "",
+          "usr_template": "",
+          "out_typ": "",
+          "prompt_id": 5
+        }
+      },
+      "travel": {
+        "json_structure": {
+          "template": "",
+          "input_variables": [
+            "context"
+          ],
+          "sys_template": "You are a precise contract extraction assistant.\nYour task is to carefully read the provided Lease/Rental Deed Agreement text and extract structured information in JSON format.\nAlways return well-formed JSON. Do not add extra commentary.",
+          "usr_template": "Extract the following fields from the lease/rental deed agreement text:\n\n        Required JSON schema:\n        {{\n          \"document_type\": \"string\",\n          \"lease_details\": {{\n              \"agreement_type\": \"string (Lease / Rental Deed)\",\n              \"agreement_date\": \"string (YYYY-MM-DD if available, else raw text)\",\n              \"registration_number\": \"string\",\n              \"jurisdiction\": \"string (city/court/registration office)\",\n              \"start_date\": \"string\",\n              \"end_date\": \"string\",\n              \"duration_months\": \"integer\",\n              \"renewal_terms\": \"string\"\n          }},\n          \"landlord\": {{\n              \"name\": \"string\",\n              \"address\": \"string\",\n              \"contact\": \"string\",\n              \"aadhar_id_proof\": \"string\",\n              \"pan_or_tax_id\": \"string\",\n              \"bank_account_details\": \"string\",\n              \"upi_id\": \"string\"\n          }},\n          \"tenant\": {{\n              \"name\": \"string\",\n              \"address\": \"string\",\n              \"tenant_contact\": \"string\",\n              \"aadhar_id_proof\": \"string\",\n              \"pan_or_tax_id\": \"string\"\n          }},\n          \"property\": {{\n              \"address\": \"string\",\n              \"description\": \"string (size, type, boundaries, etc.)\",\n              \"furnishings\": \"string (furnished/semi/unfurnished, list of items)\",\n              \"utilities_included\": [\"list of utilities included\"],\n              \"restrictions\": [\"list of restrictions if any (pets, subletting, etc.)\"]\n          }},\n          \"rent_terms\": {{\n              \"monthly_rent\": \"string\",\n              \"rent_increment_policy\": \"string\",\n              \"security_deposit\": \"string\",\n              \"deposit_refund_terms\": \"string\",\n              \"payment_due_date\": \"string\",\n              \"payment_method\": \"string\",\n              \"late_fee_policy\": \"string\"\n          }},\n          \"termination_clauses\": {{\n              \"notice_period\": \"string\",\n              \"early_termination_penalty\": \"string\",\n              \"default_conditions\": \"string\"\n          }},\n          \"other_clauses\": [\n              \"list of additional clauses (dispute resolution, arbitration, force majeure, etc.)\"\n          ],\n          \"signatures\": {{\n              \"landlord_signature\": \"string (yes/no or name)\",\n              \"tenant_signature\": \"string (yes/no or name)\",\n              \"witnesses\": [\n                  \"list of witness names if available\"\n              ],\n              \"notary_signature\": \"string\"\n          }}\n        }}\n\n        Agreement Text:\n        <<<{context}>>> \n\n        Return only valid JSON following the schema.",
+          "out_typ": "json",
+          "prompt_id": 8
+        },
+        "csv_structure": {
+          "template": "",
+          "input_variables": [
+            "context"
+          ],
+          "sys_template": "You are a precise contract extraction assistant.\nYour task is to carefully read the provided Lease/Rental Deed Agreement text and extract structured information.\nAlways return the output strictly in CSV format (comma-separated).",
+          "usr_template": "Extract the following fields and return as CSV:\n\nColumns:\nagreement_type, agreement_date, registration_number, jurisdiction, start_date, end_date, duration_months, renewal_terms,\nlandlord_name, landlord_address, landlord_contact, landlord_id_proof, landlord_pan_or_tax_id, landlord_bank_account_details,\ntenant_name, tenant_address, tenant_contact, tenant_id_proof, tenant_pan_or_tax_id, tenant_emergency_contact,\nproperty_address, property_description, property_furnishings, property_utilities_included, property_restrictions,\nmonthly_rent, rent_increment_policy, security_deposit, deposit_refund_terms, payment_due_date, payment_method, late_fee_policy,\nmaintenance_by, repairs_policy, utilities_payment_by, property_tax_by, insurance,\nnotice_period, early_termination_penalty, default_conditions,\nother_clauses, landlord_signature, tenant_signature, witnesses, notary_signature\n\nAgreement Text:\n\\\"\\\"\\\"{context}\\\"\\\"\\\" \n\nReturn only one CSV row with the extracted data.",
+          "out_typ": "json",
+          "prompt_id": 9
+        }
+      },
+      "*": {
+        "*": {
+          "template": "",
+          "input_variables": [
+            "context"
+          ],
+          "sys_template": "You are an AI assistant that extracts structured data from {{doc_name}} documents.  \nYour task is to carefully analyze the provided text and return only a valid {{output_type}} object following the schema below.  \nEnsure all values are extracted exactly as they appear, normalized when necessary (e.g., numbers as integers, dates in DD/MM/YYYY).  \nIf a field is missing in the text, set it to null.\n\t\nEXTRACTION GUIDELINES:\n1. Extract only information that is explicitly stated in the document\n2. Use null for missing required fields that cannot be found\n3. Follow the exact field names and data types specified in the schema\n4. For dates, use ISO format (YYYY-MM-DD) or DD-MM-YYYY or DD/MM/YY when possible\n5. For currency amounts, include the numeric value with appropriate currency symbol\n6. Be precise and accurate - double-check all extracted values\n\nIMPORTANT: Return only valid {{output_type}} that matches the schema structure. Do not include any explanatory text.",
+          "usr_template": "Extract the following fields from the {{doc_name}} text:\n\nEXTRACTION SCHEMA ({{output_type}} format expected):\n```{{output_type}}\n{{\n  \"title\": \"Invoice\",\n  \"type\": \"object\",\n  \"properties\": {{\n    \"invoiceNumber\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"accountNumber\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"salesAreaCode\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"invoiceDate\": {{\n      \"type\": \"string\",\n      \"format\": \"date\",\n      \"required\": true\n    }},\n    \"numberOfPages\": {{\n      \"type\": \"integer\",\n      \"required\": true\n    }},\n    \"dhlExpress\": {{\n      \"type\": \"object\",\n      \"properties\": {{\n        \"invoiceNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"accountNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"salesAreaCode\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"invoiceDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"numberOfPages\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"typeOfService\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"totalWeight\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"totalNumberOfItems\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"standardShippingCharge\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"totalExtraCharges\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"analysisOfExtraCharges\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"total\": {{\n              \"type\": \"number\",\n              \"required\": true\n            }}\n          }},\n          \"required\": [\n            \"total\"\n          ]\n        }},\n        \"paymentDueDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"totalAmount\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"paymentInstructions\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"pps\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"merchantCode\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"merchantCode\"\n              ]\n            }},\n            \"bankTransfer\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"accountName\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"bankCodeAndAccountNumbers\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"bankAddress\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"accountName\",\n                \"bankCodeAndAccountNumbers\",\n                \"bankAddress\"\n              ]\n            }},\n            \"byCheque\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"payableTo\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"dueDate\": {{\n                  \"type\": \"string\",\n                  \"format\": \"date\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"payableTo\",\n                \"dueDate\"\n              ]\n            }}\n          }},\n          \"required\": [\n            \"pps\",\n            \"bankTransfer\",\n            \"byCheque\"\n          ]\n        }}\n      }},\n      \"required\": [\n        \"invoiceNumber\",\n        \"accountNumber\",\n        \"salesAreaCode\",\n        \"invoiceDate\",\n        \"numberOfPages\",\n        \"typeOfService\",\n        \"totalWeight\",\n        \"totalNumberOfItems\",\n        \"standardShippingCharge\",\n        \"totalExtraCharges\",\n        \"analysisOfExtraCharges\",\n        \"paymentDueDate\",\n        \"totalAmount\",\n        \"paymentInstructions\"\n      ]\n    }},\n    \"airWaybill\": {{\n      \"type\": \"object\",\n      \"properties\": {{\n        \"airWaybillNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"shippersReference\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"shipmentDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"originConsignor\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"destinationConsignee\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"typeOfService\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"weightInKg\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"numberOfItems\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"standardCharge\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"extraCharges\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"description\": {{\n              \"type\": \"string\",\n              \"required\": true\n            }},\n            \"amount\": {{\n              \"type\": \"number\",\n              \"required\": true\n            }}\n          }},\n          \"required\": [\n            \"description\",\n            \"amount\"\n          ]\n        }}\n      }},\n      \"required\": [\n        \"airWaybillNumber\",\n        \"shippersReference\",\n        \"shipmentDate\",\n        \"originConsignor\",\n        \"destinationConsignee\",\n        \"typeOfService\",\n        \"weightInKg\",\n        \"numberOfItems\",\n        \"standardCharge\",\n        \"extraCharges\"\n      ]\n    }}\n  }},\n  \"required\": [\n    \"invoiceNumber\",\n    \"accountNumber\",\n    \"salesAreaCode\",\n    \"invoiceDate\",\n    \"numberOfPages\",\n    \"dhlExpress\",\n    \"airWaybill\"\n  ]\n}}\n```\n\nDOCUMENT CONTENT TO ANALYZE:\n=====================================\n{context}\n=====================================\n\nTASK: Extract information from the document above and return it as {{output_type}} matching the schema.\n\nReturn valid {{output_type}} only:",
+          "out_typ": "",
+          "prompt_id": 14
+        }
+      }
+    },
+    "GENERATION_PROMPT": {
+      "*": {
+        "*": {
+          "template": "",
+          "input_variables": [
+            "document_type",
+            "document_type_title",
+            "schema_description",
+            "schema_template",
+            "context",
+            "priorities",
+            "validation_checks"
+          ],
+          "sys_template": "You are an expert at extracting structured information from {document_type} documents.\nYour task is to analyze the document content and extract information according to the provided schema.\nReturn your response as valid JSON only, with no additional text or explanation.\nYou are an AI assistant that extracts structured data from legal documents.\nYour task is to carefully analyze the provided text and return only a valid JSON object following the schema below.\nEnsure all values are extracted exactly as they appear, normalized when necessary (e.g., numbers as integers, dates in DD/MM/YYYY).\nIf a field is missing in the text, set it to null.\n\nEXTRACTION GUIDELINES:\n1. Extract only information that is explicitly stated in the document\n2. Use null for missing required fields that cannot be found\n3. Follow the exact field names and data types specified in the schema\n4. For dates, use ISO format (YYYY-MM-DD) or DD-MM-YYYY or DD/MM/YY when possible\n5. For currency amounts, include the numeric value with appropriate currency symbol\n6. Be precise and accurate - double-check all extracted values\n\nPRIORITY FIELDS (focus on these first): \n{priorities}\n\nVALIDATION REQUIREMENTS:\n{validation_checks}\n\nIMPORTANT: Return only valid JSON that matches the schema structure. Do not include any explanatory text.",
+          "usr_template": "Document Type: {document_type_title}\nSchema Description: {schema_description}\n\nEXTRACTION SCHEMA (JSON format expected):\n```json\n{schema_template}\n```\n\nDOCUMENT CONTENT TO ANALYZE:\n=====================================\n{context}\n=====================================\n\nTASK: Extract information from the document above and return it as JSON matching the schema.\nFocus especially on these priority fields: \n{priorities}\n\nReturn valid JSON only:",
+          "out_typ": "json",
+          "prompt_id": 13
+        }
+      },
+      "property": {
+        "property": {
+          "template": "",
+          "input_variables": [
+            "document_type",
+            "document_type_title",
+            "schema_description",
+            "schema_template",
+            "context",
+            "priorities",
+            "validation_checks"
+          ],
+          "sys_template": "You are an expert at extracting structured information from {document_type} documents.\nYour task is to analyze the document content and extract information according to the provided schema.\nReturn your response as valid JSON only, with no additional text or explanation.\nYou are an AI assistant that extracts structured data from legal documents.\nYour task is to carefully analyze the provided text and return only a valid JSON object following the schema below.\nEnsure all values are extracted exactly as they appear, normalized when necessary (e.g., numbers as integers, dates in DD/MM/YYYY).\nIf a field is missing in the text, set it to null.\n\nEXTRACTION GUIDELINES:\n1. Extract only information that is explicitly stated in the document\n2. Use null for missing required fields that cannot be found\n3. Follow the exact field names and data types specified in the schema\n4. For dates, use ISO format (YYYY-MM-DD) or DD-MM-YYYY or DD/MM/YY when possible\n5. For currency amounts, include the numeric value with appropriate currency symbol\n6. Be precise and accurate - double-check all extracted values\n\nPRIORITY FIELDS (focus on these first): \n{priorities}\n\nVALIDATION REQUIREMENTS:\n{validation_checks}\n\nIMPORTANT: Return only valid JSON that matches the schema structure. Do not include any explanatory text.",
+          "usr_template": "Document Type: {document_type_title}\nSchema Description: {schema_description}\n\nEXTRACTION SCHEMA (JSON format expected):\n```json\n{schema_json}\n```\n\nDOCUMENT CONTENT TO ANALYZE:\n=====================================\n{context}\n=====================================\n\nTASK: Extract information from the document above and return it as JSON matching the schema.\nFocus especially on these priority fields: \n{priorities}\n\nReturn valid JSON only:",
+          "out_typ": "json",
+          "prompt_id": 10
+        }
+      }
+    }
+  }
+}

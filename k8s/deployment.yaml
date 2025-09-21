@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: virtual-assistant
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: virtual-assistant
+  template:
+    metadata:
+      labels:
+        app: virtual-assistant
+    spec:
+      containers:
+      - name: app
+        image: virtual-assistant:latest
+        ports:
+        - containerPort: 8000

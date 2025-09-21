@@ -1,0 +1,168 @@
+vector_columns:
+    rag_txt_embed:
+        embedding_384: 384
+        embedding_768: 768
+        embedding_1024: 1024
+        embedding_1536: 1536
+        embedding_4096: 4096
+    rag_img_embed:
+        embedding_512: 512
+
+schemas:
+  schema1:
+    tables:
+
+      InfSchemaPromptLog:
+        table_name: inf_schema_prompt_log
+        columns:
+          schema_id: schema_id
+          uuid_id: external_id
+          org_id: org_id
+          domain_id: domain_id
+          ref_id: ref_id
+          src_path: source_path
+          lang: src_lang
+          doc_typ: document_type
+          out_mode: output_mode
+          out_format: output_format
+          out_dir: output_directory
+          out_filename: output_filename
+          sys_gen_schema_prop: sys_gen_schema_prop
+          mod_schema_prop: mod_schema_prop
+          res_sys_prompt: res_system_prompt
+          res_usr_prompt: res_user_prompt
+          res_inp_vars: res_input_variables
+          status: status
+          created_by: created_by
+          created_at: created_at
+
+      MtBcPromptParam:
+        table_name: mt_bc_prompt_param
+        columns:
+          param_id: param_id
+          uuid_id: external_id
+          org_id: org_id
+          domain_id: domain_id
+          task_id: task_id
+          prompt_id: prompt_id
+          prompt_typ: prompt_typ
+          param_key: param_key
+          param_value: param_value
+          created_by: created_by
+          created_at: created_at
+          updated_by: updated_by
+          updated_at: updated_at
+
+      RagSrc:
+        table_name: rag_src
+        columns:
+          src_id: rag_src_id
+          uuid_id: external_id
+          org_id: org_id
+          domain_id: domain_id
+          src_typ: src_typ
+          src_dtls: src_dtls
+          lang: src_lang
+          title: title
+          metadata: metadata
+          status: status
+          published_at: published_at
+          created_by: created_by
+          created_at: created_at
+
+      RagTxtEmbed:
+        table_name: rag_txt_embed
+        columns:
+          id: txt_id
+          uuid_id: external_id
+          src_id: src_id
+          chunk_id: chunk_id
+          org_id: org_id
+          type: dtype
+          fpath: fpath
+          embed_384: embedding_384
+          embed_768: embedding_768
+          embed_1024: embedding_1024
+          embed_1536: embedding_1536
+          embed_4096: embedding_4096
+          chunk_txt: chunk_txt
+          model_name: model_name
+          metadata: metadata
+          created_at: created_at
+
+      RagLinks:
+        table_name: rag_links
+        columns:
+          id: link_id
+          uuid_id: external_id
+          src_id: src_id
+          org_id: org_id
+          type: dtype
+          stype: stype
+          url: url
+          dtls: dtls
+          metadata: metadata
+          created_at: created_at
+
+      RagImgEmbed:
+        table_name: rag_img_embed
+        columns:
+          id: img_id
+          uuid_id: external_id
+          src_id: src_id
+          org_id: org_id
+          fpath: fpath
+          embed_512: embedding_512
+          model_name: model_name
+          dtls: dtls
+          metadata: metadata
+          created_at: created_at
+
+      RagVideoEmbed:
+        table_name: rag_video_embed
+        columns:
+          id: video_id
+          uuid_id: external_id
+          src_id: src_id
+          org_id: org_id
+          chunk_id: chunk_id
+          fpath: fpath
+          embed_384: embedding_384
+          embed_768: embedding_768
+          embed_1024: embedding_1024
+          embed_1536: embedding_1536
+          embed_4096: embedding_4096
+          txt_model_name: model_name
+          chunk_txt: chunk_txt
+          img_embed_512: img_embedding_512
+          img_model_name: img_model_name
+          metadata: metadata
+          created_at: created_at
+
+      RagQryLogs:
+        table_name: rag_qry_logs
+        columns:
+          id: qlog_id
+          uuid_id: external_id
+          org_id: org_id
+          qry_txt: qry_txt
+          resp_txt: resp_txt
+          wsite_name: wsite_name
+          top_results: top_results
+          resp_time: resp_time
+          metadata: metadata
+          qry_dt: qry_dt
+
+      MtRagPrompt:
+        table_name: mt_rag_prompt
+        columns:
+          id: prompt_id
+          uuid_id: external_id
+          org_id: org_id
+          domain_id: domain_id
+          task_id: task_id
+          task_desc: task_desc
+          template: template
+          input_vars: input_variables
+          disp_seq: disp_seq
+          created_at: created_at

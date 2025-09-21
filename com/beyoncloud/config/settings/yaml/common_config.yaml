@@ -1,0 +1,3 @@
+dateformat: "%d/%m/%Y"
+timestamp_format: "%d/%m/%Y %H:%M:%S"
+timestamp_microsec_format: "%d/%m/%Y %H:%M:%S.%f"

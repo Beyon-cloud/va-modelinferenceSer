@@ -1,0 +1,48 @@
+syntax = "proto3";
+ 
+package ocrinfrence;
+ 
+ 
+// Request from data processing OCR engine to Inference service
+message DpsOcrToInferenceRequest {
+    string request_reference_id = 1;
+    string document_batch_id = 2;
+    int32 organization_id = 3;
+    string domain_id =4;
+    int32 user_id = 5;
+    string desired_output_mode = 6;
+    string desired_output_format = 7;
+    string source_file_path = 8;
+    string source_lang = 9;
+    string document_type = 10;
+    string output_filename = 11;
+    string ocr_result_storage_path = 12;
+    string inference_result_storage_path = 13;
+    string ocr_result_file_path = 14;
+}
+ 
+// Response from Inference service to data processing OCR engine
+message DpsOcrToInferenceResponse {
+    string request_reference_id = 1;
+    string document_batch_id = 2;
+    int32 organization_id = 3;
+    string domain_id =4;
+    int32 user_id = 5;
+    string desired_output_mode = 6;
+    string desired_output_format = 7;
+    string source_file_path = 8;
+    string source_lang = 9;
+    string document_type = 10;
+    string output_filename = 11;
+    string ocr_result_storage_path = 12;
+    string inference_result_storage_path = 13;
+    string ocr_result_file_path = 14;
+    string inference_result_file_path = 15;
+    string status = 16;
+    string message = 17;
+}
+ 
+// gRPC Service Definition for Infrense service
+service DpsOcrInfService {
+  rpc GetDpsOcrInfResponse(DpsOcrToInferenceRequest) returns (DpsOcrToInferenceResponse);
+}

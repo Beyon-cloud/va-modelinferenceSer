@@ -1,0 +1,101 @@
+from datetime import datetime
+import logging
+from com.beyoncloud.processing.rag_process_impl import RagProcessImpl
+from com.beyoncloud.schemas.rag_reqres_data_model import (
+    RagReqDataModel, 
+    RagRespDataModel, 
+    StructureInputData, 
+    StructureRespProcessRequest,
+    StructureRespProcessResponse,
+    StructureInputDataBuilder,
+    StructureRespProcessResponseBuilder
+)
+from com.beyoncloud.services.database_service import DataBaseService
+from com.beyoncloud.common.constants import PromptType, FileExtension, FileFormats
+from com.beyoncloud.utils.file_util import FetchContent, FileCreation
+from com.beyoncloud.utils.date_utils import current_timestamp_trim
+import com.beyoncloud.config.settings.env_config as config
+
+logger = logging.getLogger(__name__)
+
+async def rag_chat_process(ragReqDataModel: RagReqDataModel) -> RagRespDataModel:
+
+    starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    ragProcessImpl = RagProcessImpl()
+    response = await ragProcessImpl.generateRAGResponse(ragReqDataModel)
+    endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
+    return response
+
+class InfrenceService:
+
+    def __init__(self, db_service: DataBaseService | None = None):
+        """
+        Initialize the InfrenceService with DB service.
+
+        Args:
+            db_service (DataBaseService, optional): Dependency-injected DB service.
+                                                   If None, a new instance is created.
+        """
+        self.db_service = db_service or DataBaseService()
+
+    async def inf_structure_resp_process(self, structure_resp_process_request: StructureRespProcessRequest) -> StructureRespProcessResponse:
+
+        # Step 1: Build the entity request using the builder pattern, ensuring the builder returns expected shape.
+        structure_input_data = (
+            StructureInputDataBuilder()
+            .with_source_path(structure_resp_process_request.source_file_path)
+            .with_prompt_type(PromptType.RESP_PROMPT)
+            .with_organization_id(structure_resp_process_request.organization_id)
+            .with_domain_id(structure_resp_process_request.domain_id)
+            .with_document_type(structure_resp_process_request.document_type)
+            .with_user_id(structure_resp_process_request.user_id)
+            .with_source_lang(structure_resp_process_request.source_lang)
+            .with_output_mode(structure_resp_process_request.desired_output_mode)
+            .with_output_format(structure_resp_process_request.desired_output_format)
+            .build()
+        )
+
+        # Step 2: Call Inference model
+        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        ragProcessImpl = RagProcessImpl()
+        response = await ragProcessImpl.generate_structured_response(structure_input_data)
+        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
+
+        # Step 3: Clean response and extract specific file content
+        fetch_content = FetchContent()
+        cleaned_response = fetch_content.fetch_content(response, structure_resp_process_request.desired_output_format)
+        print(f"cleaned_response --> {cleaned_response}")
+
+        # Step 4: Generate output file
+        file_extension = FileExtension.TEXT
+        if structure_resp_process_request.desired_output_format == FileFormats.JSON:
+            file_extension = FileExtension.JSON
+        elif structure_resp_process_request.desired_output_format == FileFormats.CSV:
+            file_extension = FileExtension.CSV
+        elif structure_resp_process_request.desired_output_format == FileFormats.XLSX:
+            file_extension = FileExtension.XLSX
+
+        file_creation = FileCreation()
+        output_filename = file_creation.generate_file_name(
+            structure_resp_process_request.output_filename,
+            config.CLARIDATA_FILENAME,
+            structure_resp_process_request.document_batch_id,
+            structure_resp_process_request.request_reference_id,
+            file_extension
+        )
+
+        output_dir_path = structure_resp_process_request.inference_result_storage_path or config.CLARIDATA_DIR_PATH
+        if file_extension == FileExtension.JSON:
+            generated_filepath = file_creation.create_json_file(output_dir_path,output_filename,cleaned_response)
+
+        # Step 5: Response datamodel formation
+        structure_resp_process_response = (StructureRespProcessResponseBuilder(structure_resp_process_request)
+                    .with_inference_result_file_path(generated_filepath)
+                    .with_status("Success")
+                    .with_message("File generated successfully")
+                    .build()
+        )
+
+        return structure_resp_process_response

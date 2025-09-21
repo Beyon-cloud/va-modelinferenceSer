@@ -1,0 +1,16 @@
+server:
+  dev:
+    inf_service:
+      host: ${INF_GRPC_HOST}
+      port: ${INF_GRPC_PORT}
+    dps_ocr_service:
+      host: ${DPS_OCR_GRPC_HOST}
+      port: ${DPS_OCR_GRPC_PORT}
+  stage:
+    inf_service:
+      host: ${INF_GRPC_HOST}
+      port: ${INF_GRPC_PORT}
+    dps_ocr_service:
+      host: ${DPS_OCR_GRPC_HOST}
+      port: ${DPS_OCR_GRPC_PORT}
+

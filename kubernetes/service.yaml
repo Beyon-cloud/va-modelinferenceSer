@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vis-nlpengineser
+spec:
+  selector:
+    app: vis-nlpengineser
+  ports:
+  - protocol: TCP
+    port: 5107
+    targetPort: 5107
+  type: LoadBalancer

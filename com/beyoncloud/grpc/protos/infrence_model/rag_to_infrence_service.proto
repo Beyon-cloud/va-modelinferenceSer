@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package raginfrence;
+
+import "google/protobuf/struct.proto";
+
+message UserInput {
+  string type = 1;
+  string content = 2;
+  string translate_content = 3;
+
+  message Metadata {
+    string content_language = 1;
+  }
+
+  Metadata metadata = 4;
+  string media_url = 5;
+}
+
+message Entity {
+  //google.protobuf.Struct attributes = 1;
+  string entity_group = 1;
+  string word = 2;
+}
+
+message DialogDetail {
+  string intent = 1;
+  repeated UserInput user_input = 2;
+
+  message Response {
+    string text = 1;
+    string translate_text = 2;
+  }
+
+  Response response = 3;
+
+  message Metadata {
+    string preferred_language = 1;
+    string channel = 2;
+    string platform = 3;
+  }
+
+  Metadata metadata = 4;
+  string sentiment = 5;
+  repeated Entity entities = 6;
+  string timestamp = 7;
+}
+
+// Session Context
+message Context {
+  string id = 1;
+  string session_id = 2;
+  string user_id = 3;
+  string created_at = 4;
+  string last_updated = 5;
+  string group_id = 6;
+  string profile_id = 7;
+  int32 org_id = 8;
+  string domain_id = 9;
+  repeated DialogDetail dialogDetails = 10;
+}
+
+// Request from DMS to RAG
+message DMSRequest {
+  string session_id = 1;
+  string user_id = 2;
+  string group_id = 3;
+  string profile_id = 4;
+  int32 org_id = 5;
+  string domain_id = 6;
+  string response_type = 7;
+  repeated UserInput user_input = 8;
+
+  message Metadata {
+    string preferred_language = 1;
+    string channel = 2;
+    string platform = 3;
+  }
+
+  Metadata metadata = 9;
+  string intent = 10;
+  string sentiment = 11;
+  repeated Entity entity = 12;
+  Context context = 13;
+}
+
+message RagToInfrenceRequest {
+    DMSRequest dms_request = 1;
+    repeated google.protobuf.Struct search_result = 2;
+}
+
+message RagToInfrenceResponse {
+    message InfResponse {
+        string text = 1;
+    }
+    InfResponse response = 1;
+}
+
+// gRPC Service Definition for Infrense service
+service RAGInfService {
+  rpc GetInfResponse(RagToInfrenceRequest) returns (RagToInfrenceResponse);
+}

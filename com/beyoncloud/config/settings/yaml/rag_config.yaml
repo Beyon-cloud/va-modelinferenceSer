@@ -1,0 +1,6 @@
+rag_process_settings:
+  environments:
+    dev:
+        page_crawl_limit:
+            enabled: true
+            max_pages: 10

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: vis-nlpengineser
+    spec:
+      containers:
+      - name: vis-nlpengineser
+        image: vis-nlpengineser:latest
+        ports:
+        - containerPort: 8000
