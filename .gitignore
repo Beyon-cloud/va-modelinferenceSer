@@ -1,0 +1,69 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Virtual environment directories
+venv/
+env/
+.venv/
+.env/
+
+# FastAPI specific
+*.db
+*.sqlite
+*.sqlite3
+#*.log
+*.pid
+
+# Configuration files
+#*.env
+#*.env.*
+*.local
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE/Editor settings
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Dependency directories
+.venv/
+dist/
+build/
+eggs/
+*.egg-info/
+
+# Docker files (optional)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Pytest cache
+.cache/
+
+# PyInstaller
+*.spec
+
+# MyPy (static type checker)
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Bandit (security checker)
+.bandit/
+
+# Coverage reports
+.coverage
+.coverage.*
+*.coveragerc
+
+# Other miscellaneous files
+#*.log
+*.pot
+*.mo
+
+# Local environments and settings
+.local/
