@@ -11,7 +11,7 @@ from com.beyoncloud.schemas.prompt_gen_reqres_datamodel import (
     SchemaPromptRequest, EntityPromptRequest
 ) 
 from com.beyoncloud.processing.prompt.prompt_generation.template_mapping  import PropertySchemaTemplate
-from com.beyoncloud.utils.file_util import TextLoader
+from com.beyoncloud.utils.file_util import TextLoader, FetchContent, CommonPatterns
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
 from com.beyoncloud.processing.prompt.prompt_template import (
@@ -209,10 +209,14 @@ class EnhancedDocumentProcessor:
         if not file_path or not isinstance(file_path, str):
             raise ValueError("file_path is required and must be a non-empty string")
 
+        text_loader = TextLoader()
+        file_context = text_loader.get_text_content(schema_prompt_request.source_path)
+
         # Build the entity request using the builder pattern, ensuring the builder returns expected shape.
         structure_input_data = (
             StructureInputDataBuilder()
             .with_source_path(schema_prompt_request.source_path)
+            .with_context_data(file_context)
             .with_prompt_type(PromptType.SCHEMA_PROMPT)
             .with_organization_id(schema_prompt_request.organization_id)
             .with_domain_id(schema_prompt_request.domain_id)

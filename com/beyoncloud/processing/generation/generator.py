@@ -181,10 +181,11 @@ class RagGeneratorProcess:
 
 
         # Combine context from search results
-        fullContext =""
-        if structure_input_data.source_path:
-            text_loader = TextLoader()
-            fullContext = text_loader.get_text_content(structure_input_data.source_path)
+        fullContext = structure_input_data.context_data
+        #if structure_input_data.source_path:
+        #    text_loader = TextLoader()
+        #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
+        print(f"fullContext -----------> {fullContext}")
 
         # Prompt Generation
         prompt_output = get_prompt_template(
@@ -251,10 +252,10 @@ class RagGeneratorProcess:
 
 
         # Combine context from search results
-        fullContext =""
-        if structure_input_data.source_path:
-            text_loader = TextLoader()
-            fullContext = text_loader.get_text_content(structure_input_data.source_path)
+        fullContext = structure_input_data.context_data
+        #if structure_input_data.source_path:
+        #    text_loader = TextLoader()
+        #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
 
         # Prompt Generation
         prompt_output = get_prompt_template(

@@ -204,12 +204,12 @@ class RagProcessImpl:
         #print(response)
         try:
             
-            fullContext =""
-            file_path = ""
-            if structure_input_data.source_path:
-                text_loader = TextLoader()
-                fullContext = text_loader.get_text_content(structure_input_data.source_path)
-                file_path = structure_input_data.source_path
+            fullContext = structure_input_data.context_data
+            file_path = structure_input_data.source_path
+            #if structure_input_data.source_path:
+            #    text_loader = TextLoader()
+            #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
+            #    file_path = structure_input_data.source_path
             search_result_json = [fullContext]
 
             metadata = {

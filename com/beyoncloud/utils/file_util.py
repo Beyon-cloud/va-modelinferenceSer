@@ -172,7 +172,7 @@ class FetchContent:
     def __init__(self):
         pass
 
-    def fetch_content(self, input_data: str, file_format: str):
+    def fetch_schema_content(self, input_data: str, file_format: str):
         """
         Fetch and parse content based on filetype.
         Returns JSON object (dict or list) if output_filetype is JSON,
@@ -243,3 +243,21 @@ class FetchContent:
         if match:
             return match.group(1)
         return None
+
+
+    def fetch_ocr_content(self, filepath: str) -> str:
+
+        if not filepath:
+            logger.info(f"The given filepath is empty")
+            return None
+
+        json_loader = JsonLoader()
+        json_data = json_loader.get_json_object(filepath)
+
+        if not json_data:
+            logger.info(f"The given file have empty data. Filepath is {filepath} ")
+            return None
+
+        full_text = "".join(page.get("text", "") for page in json_data.get("results", []))
+        
+        return full_text

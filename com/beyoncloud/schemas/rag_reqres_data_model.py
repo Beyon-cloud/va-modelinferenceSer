@@ -109,6 +109,7 @@ class RagLogQryModel(BaseModel):
 
 class StructureInputData(BaseModel):
     source_path: str = Field(..., description="Path to the source text file")
+    context_data: str = Field(..., description="Input source text context for the source_path")
     prompt_type: str = Field(..., description="Document type")
     organization_id: int = Field(..., description="ID of the requesting organization")
     domain_id: str = Field(..., description="ID representing the business domain")
@@ -127,6 +128,7 @@ class StructureInputDataBuilder:
     def __init__(self):
         self.structure_input_data = StructureInputData(
             source_path = CommonPatterns.EMPTY_SPACE, 
+            context_data = CommonPatterns.EMPTY_SPACE, 
             prompt_type = CommonPatterns.EMPTY_SPACE,
             organization_id = Numerical.ZERO,
             domain_id = CommonPatterns.ASTRICK,
@@ -140,6 +142,10 @@ class StructureInputDataBuilder:
 
     def with_source_path(self, source_path: str) -> Self:
         self.structure_input_data.source_path = source_path
+        return self
+
+    def with_context_data(self, context_data: str) -> Self:
+        self.structure_input_data.context_data = context_data
         return self
 
     def with_prompt_type(self, prompt_type: str) -> Self:
