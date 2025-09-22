@@ -97,10 +97,39 @@ class FileCreation:
         pass
 
     def create_text_file(self, dir_path: str, filename: str, text_content: str) -> str:
+        """
+        Create a text file with the given content.
+
+        Args:
+            dir_path (str): Target directory path. If it doesn't exist, it will be created.
+            filename (str): Name of the file to create (should include extension, e.g., "output.txt").
+            text_content (str): Text content to write into the file.
+
+        Returns:
+            str: The full path to the created output file.
+
+        Raises:
+            OSError: If the file cannot be created or written.
+            ValueError: If filename is empty.
+        """
+        # Validate inputs
+        if not filename:
+            raise ValueError("filename must be a non-empty string")
+
+        # Ensure the directory exists
         os.makedirs(dir_path, exist_ok=True)
+
+        # Build the full path
         output_filepath = os.path.join(dir_path, filename)
-        with open(output_filepath, "w") as f:
-            f.write(text_content)
+
+        # Write content to file with UTF-8 encoding
+        try:
+            with open(output_filepath, "w", encoding="utf-8") as f:
+                f.write(text_content)
+                f.flush()  # ensure content is written to disk
+        except OSError as e:
+            # Re-raise with additional context if desired
+            raise OSError(f"Failed to write text file at {output_filepath}: {e}") from e
 
         return output_filepath
 

@@ -17,26 +17,13 @@ class ModelRegistry:
 
     @classmethod
     def initialize_all_model(cls):
-        cls._load_dslim_bert_ner_entity_model()
         cls._load_llama_model()
 
     @classmethod
-    def _load_dslim_bert_ner_entity_model(cls):
-        model_name = config.MODEL_CONFIG.get("dslim_bert-large-NER")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForTokenClassification.from_pretrained(model_name)
-        device_idx = 0 if cls.device == "cuda" else -1
-        cls.dslim_ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer,aggregation_strategy="simple", device=device_idx)
-
-    @classmethod
     def _load_llama_model(cls):
-        #model_path = config.MODEL_CONFIG.get("local_llama_2.7B")
-        #model_path = config.MODEL_CONFIG.get("local_llama_2.7Bchat")
-        #model_path = config.MODEL_CONFIG.get("local_llama_model_3.2-3B")
-        model_path = config.MODEL_CONFIG.get("local_llama_model_3.2-3B-instruct")
-        #model_path = config.MODEL_CONFIG.get("local_mistralai_Mistral-7B-v0.3")
-        print(f"Initializing model from: {model_path}")
-        print(f"Using device: {'GPU' if cls.device == "cuda" else 'CPU'}")
+        model_path = config.MODEL_CONFIG.get("local_llama_model")
+        logger.info(f"Initializing model from: {model_path}")
+        logger.info(f"Using device: {'GPU' if cls.device == "cuda" else 'CPU'}")
 
         # Load tokenizer and model
         cls.llama_tokenizer = AutoTokenizer.from_pretrained(model_path)

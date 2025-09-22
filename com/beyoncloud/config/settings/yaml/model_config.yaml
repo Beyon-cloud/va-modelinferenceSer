@@ -1,47 +1,15 @@
 model_config:
   environments:
     dev:
-      txt_embed_model:
-        selected_model:
-          default_model: e5-large-v2
-        models:
-          - model_alias: e5-large-v2
-            model_id: intfloat/e5-large-v2
-            model_type: embedding
-            family: e5
-          - model_alias: gte-large
-            model_id: thenlper/gte-large
-            model_type: embedding
-            family: gte
       llm_model:
         selected_model:
-          default_model: e5-large-v2
+          default_model: llama-3.2-3B-instruct
         models:
           - model_alias: llama-3.2-3B-instruct
             model_id: meta-llama/Llama-3.2-3B-Instruct
             model_type: llm
             family: llama
             task: text-generation
-            max_new_tokens: 256
-            temperature: 0.8
-            do_sample: False
-            top_p: 0.9
-            repetition_penalty: 1.1
-            return_full_text: False
-          - model_alias: llama-3.2-3B
-            model_id: meta-llama/llama-3.2-3B
-            model_type: llm
-            family: llama
-            max_new_tokens: 256
-            temperature: 0.8
-            do_sample: False
-            top_p: 0.9
-            repetition_penalty: 1.1
-            return_full_text: False
-          - model_alias: llama-2-7b-chat
-            model_id: meta-llama/llama-2-7b-chat-sft
-            model_type: llm
-            family: llama
             max_new_tokens: 256
             temperature: 0.8
             do_sample: False
@@ -67,27 +35,6 @@ query_retrieval_top_k: 10
 retrieval_top_k: 6
 score_threshold: 0.5
 
-#Text embedding model
-minilm_embedding_model: D:\model\sentence_transformers-all-MiniLM-L6-v2
-gtelarge_embedding_model: D:\model\thenlper_gte-large
-e5largev2_embedding_model: D:\model\intfloat_e5-large-v2
-
-# Image embedding model
-img_embedding_model: clip-ViT-B-32
-openai_img_embedding_model: D:\\model\\clip-vit-base-patch32-sft
-
 # LLM Model
-llama_model: meta-llama/Llama-2-7b-hf
-local_llama_model_3.2-1B: D:\\model\\meta-llama_Llama-3.2-1B
-local_llama_model_3.2-3B: D:\\model\\meta-llama_Llama-3.2-3B
-local_llama_model_3.2-3B-instruct: D:\\model\\meta-llama_Llama-3.2-3B-instruct
-local_llama_2.7B: D:\\model\\Llama-2-7b
-local_llama_2.7Bchat: D:\\model\\Llama2-7b-chat-sft
-local_mistralai_Mistral-7B-v0.3: D:\\model\\mistralai_Mistral-7B-Instruct-v0.3
-
-# Entity Model
-entity_ext_model_sm: en_core_web_trf
-dslim_bert-large-NER: D:\model\dslim_bert-large-NER
-flair_ner-english-large: D:\model\flair_ner-english-large
-
-
+local_llama_model: E:\\Models\\meta-llama_Llama-3.2-3B-Instruct
+#local_llama_model: D:\\model\\meta-llama_Llama-3.2-3B-Instruct

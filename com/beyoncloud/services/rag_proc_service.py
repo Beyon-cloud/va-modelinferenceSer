@@ -101,17 +101,19 @@ class InfrenceService:
             file_extension
         )
 
-        output_dir_path = structure_resp_process_request.inference_result_storage_path or config.CLARIDATA_DIR_PATH
+        output_dir_path = structure_resp_process_request.inference_result_storage_path
         if not output_dir_path:
             output_dir_path = os.path.join(
                 config.CLARIDATA_DIR_PATH,
-                structure_resp_process_request.organization_id,
+                str(structure_resp_process_request.organization_id),
                 current_date_trim()
             )
 
         if file_extension == FileExtension.JSON:
             generated_filepath = file_creation.create_json_file(output_dir_path,output_filename,cleaned_response)
-
+        else:
+            generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
+            
         # Step 6: Response datamodel formation
         structure_resp_process_response = (StructureRespProcessResponseBuilder(structure_resp_process_request)
                     .with_inference_result_file_path(generated_filepath)
