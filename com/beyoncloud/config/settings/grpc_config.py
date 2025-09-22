@@ -6,6 +6,7 @@ import importlib
 from grpc.aio import Channel
 from grpclib.server import Server
 from com.beyoncloud.grpc.server.infrence_model.inf_server import RAGInfService
+from com.beyoncloud.grpc.server.dps_ocr.dps_ocr_server import DpsOcrInfService
 
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
@@ -43,7 +44,7 @@ class GrpcServers:
 
         self.dps_ocr_service = BaseGrpcServer(
             service_name="dps_ocr_service",
-            servicer_instance=RAGInfService()
+            servicer_instance=DpsOcrInfService()
         )
 
         # gather servers to run concurrently
