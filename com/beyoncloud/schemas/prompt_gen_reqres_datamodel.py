@@ -89,23 +89,29 @@ class SchemaPromptRequest(BaseModel):
         organization_id (int): ID of the requesting organization.
         domain_id (str): ID representing the business domain.
         user_id (Optional[int]): ID of the user requesting schema.
-        source_path (str): Source data file path for the schema prompt request.
-        desired_output_mode (str): Domain ID.
-        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
+        desired_output_mode (str): Mode of the output Ex :File,DB,API.
         desired_output_format (str): Format of the output file.
+        source_file_path (str): Source data file path for the structure response process request.
+        source_lang (str): Source file language.
+        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
         output_filename (str): Name of the generated output file.
+        ocr_result_storage_path (str): Location to store OCR results.
+        inference_result_storage_path (str): Location to store inference results.
+        ocr_result_file_path (str): OCR Extracted file path to process.
     """
     request_reference_id: StrictStr = Field(..., description="Unique identifier for the request")
     organization_id: StrictInt = Field(..., description="ID of the requesting organization")
     domain_id: StrictStr = Field(..., description="ID representing the business domain")
     user_id: Optional[StrictInt] = Field(None, description="ID of the user requesting extraction")
-    source_path: StrictStr = Field(..., description="Path to the source text file")
-    source_lang: StrictStr = Field(..., description="Source file language")
     desired_output_mode: StrictStr = Field(..., description="Mode of the output Ex :File,DB,API")
-    document_type: StrictStr = Field(..., description="Type of document Ex: Property, Insurance,Logistic,...")
     desired_output_format: StrictStr = Field(..., description="Format of the output file")
-    output_directory: StrictStr = Field(..., description="Destination folder path")
+    source_file_path: StrictStr = Field(..., description="Path to the source text file")
+    source_lang: StrictStr = Field(..., description="Source file language")
+    document_type: StrictStr = Field(..., description="Type of document Ex: Property, Insurance,Logistic,...")
     output_filename: Optional[StrictStr] = Field(None, description="Name of the generated output file")
+    ocr_result_storage_path: Optional[StrictStr] = Field(None, description="Location to store OCR results")
+    inference_result_storage_path: Optional[StrictStr] = Field(None, description="Location to store inference results")
+    ocr_result_file_path: StrictStr = Field(None, description="Extracted file path to process")
 
 
 class SchemaPromptResponse(SchemaPromptRequest):
@@ -115,9 +121,9 @@ class SchemaPromptResponse(SchemaPromptRequest):
     Author: Jenson (10-09-2025)
  
     Attributes:
-        schema_path (str): Requested schema file path.
+        schema_template_filepath (str): Generated schema template file path.
     """
-    schema_path: StrictStr = Field(..., description="Schema file path")
+    schema_template_filepath: StrictStr = Field(..., description="Generated schema template file path")
 
 
 class SchemaPromptResponseBuilder:
@@ -127,14 +133,16 @@ class SchemaPromptResponseBuilder:
             organization_id = schema_prompt_request.organization_id or Numerical.ZERO,
             domain_id = schema_prompt_request.domain_id or CommonPatterns.EMPTY_SPACE,
             user_id = schema_prompt_request.user_id or Numerical.ZERO,
-            source_path = schema_prompt_request.source_path or CommonPatterns.EMPTY_SPACE,
-            source_lang = schema_prompt_request.source_lang or CommonPatterns.EMPTY_SPACE,
             desired_output_mode = schema_prompt_request.desired_output_mode or CommonPatterns.EMPTY_SPACE,
-            document_type = schema_prompt_request.document_type or CommonPatterns.EMPTY_SPACE,
             desired_output_format = schema_prompt_request.desired_output_format or CommonPatterns.EMPTY_SPACE,
-            output_directory = schema_prompt_request.output_directory or CommonPatterns.EMPTY_SPACE,
+            source_file_path = schema_prompt_request.source_file_path or CommonPatterns.EMPTY_SPACE,
+            source_lang = schema_prompt_request.source_lang or CommonPatterns.EMPTY_SPACE,
+            document_type = schema_prompt_request.document_type or CommonPatterns.EMPTY_SPACE,
             output_filename = schema_prompt_request.output_filename or CommonPatterns.EMPTY_SPACE,
-            schema_path = CommonPatterns.EMPTY_SPACE
+            ocr_result_storage_path = schema_prompt_request.ocr_result_storage_path or CommonPatterns.EMPTY_SPACE,
+            inference_result_storage_path = schema_prompt_request.inference_result_storage_path or CommonPatterns.EMPTY_SPACE,
+            ocr_result_file_path = schema_prompt_request.ocr_result_file_path or CommonPatterns.EMPTY_SPACE,
+            schema_template_filepath = CommonPatterns.EMPTY_SPACE
         )
 
     def with_request_reference_id(self, request_reference_id: str) -> Self:
@@ -153,36 +161,44 @@ class SchemaPromptResponseBuilder:
         self.schema_prompt_response.user_id = user_id
         return self
 
-    def with_source_path(self, source_path: str) -> Self:
-        self.schema_prompt_response.source_path = source_path
-        return self
-
-    def with_source_lang(self, source_lang: str) -> Self:
-        self.schema_prompt_response.source_lang = source_lang
-        return self
-
     def with_desired_output_mode(self, desired_output_mode: str) -> Self:
         self.schema_prompt_response.desired_output_mode = desired_output_mode
-        return self
-
-    def with_document_type(self, document_type: str) -> Self:
-        self.schema_prompt_response.document_type = document_type
         return self
 
     def with_desired_output_format(self, desired_output_format: str) -> Self:
         self.schema_prompt_response.desired_output_format = desired_output_format
         return self
 
-    def with_output_directory(self, output_directory: str) -> Self:
-        self.schema_prompt_response.output_directory = output_directory
+    def with_source_file_path(self, source_file_path: str) -> Self:
+        self.schema_prompt_response.source_file_path = source_file_path
+        return self
+
+    def with_source_lang(self, source_lang: str) -> Self:
+        self.schema_prompt_response.source_lang = source_lang
+        return self
+
+    def with_document_type(self, document_type: str) -> Self:
+        self.schema_prompt_response.document_type = document_type
         return self
 
     def with_output_filename(self, output_filename: str) -> Self:
         self.schema_prompt_response.output_filename = output_filename
         return self
 
-    def with_schema_path(self, schema_path: str) -> Self:
-        self.schema_prompt_response.schema_path = schema_path
+    def with_ocr_result_storage_path(self, ocr_result_storage_path: str) -> Self:
+        self.schema_prompt_response.ocr_result_storage_path = ocr_result_storage_path
+        return self
+
+    def with_inference_result_storage_path(self, inference_result_storage_path: str) -> Self:
+        self.schema_prompt_response.inference_result_storage_path = inference_result_storage_path
+        return self
+
+    def with_ocr_result_file_path(self, ocr_result_file_path: str) -> Self:
+        self.schema_prompt_response.ocr_result_file_path = ocr_result_file_path
+        return self
+
+    def with_schema_template_filepath(self, schema_template_filepath: str) -> Self:
+        self.schema_prompt_response.schema_template_filepath = schema_template_filepath
         return self
 
     def build(self) -> SchemaPromptResponse:
@@ -199,22 +215,27 @@ class EntityPromptRequest(BaseModel):
         organization_id (int): ID of the requesting organization.
         domain_id (str): ID representing the business domain.
         user_id (Optional[int]): ID of the user requesting schema.
-        source_path (str): Source data file path for the schema prompt request.
-        desired_output_mode (str): Domain ID.
-        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
+        desired_output_mode (str): Mode of the output Ex :File,DB,API.
         desired_output_format (str): Format of the output file.
+        source_file_path (str): Source data file path for the structure response process request.
+        source_lang (str): Source file language.
+        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
         output_filename (str): Name of the generated output file.
+        ocr_result_storage_path (str): Location to store OCR results.
+        inference_result_storage_path (str): Location to store inference results.
+        ocr_result_file_path (str): OCR Extracted file path to process.
+        schema_template_filepath (str): Updated schemea template file path
     """
     request_reference_id: StrictStr = Field(..., description="Unique identifier for the request")
     organization_id: StrictInt = Field(..., description="ID of the requesting organization")
     domain_id: StrictStr = Field(..., description="ID representing the business domain")
     user_id: Optional[StrictInt] = Field(None, description="ID of the user requesting extraction")
-    source_path: StrictStr = Field(..., description="Path to the source text file")
-    source_lang: StrictStr = Field(..., description="Source file language")
     desired_output_mode: StrictStr = Field(..., description="Mode of the output Ex :File,DB,API")
-    document_type: StrictStr = Field(..., description="Type of document Ex: Property, Insurance,Logistic,...")
     desired_output_format: StrictStr = Field(..., description="Format of the output file")
-    schema_path: StrictStr = Field(..., description="Schema file path")
+    source_file_path: StrictStr = Field(..., description="Path to the source text file")
+    source_lang: StrictStr = Field(..., description="Source file language")
+    document_type: StrictStr = Field(..., description="Type of document Ex: Property, Insurance,Logistic,...")
+    schema_template_filepath: StrictStr = Field(..., description="Updated schemea template file path")
 
 class EntityPromptResponse(EntityPromptRequest):
     """
@@ -233,18 +254,18 @@ class EntityPromptResponse(EntityPromptRequest):
     input_variables: StrictStr = Field(..., description="Schema file path")
 
 class EntityPromptResponseBuilder:
-    def __init__(self):
+    def __init__(self, entity_prompt_request: EntityPromptRequest) -> EntityPromptResponse:
         self.entity_prompt_response = EntityPromptResponse(
-            request_reference_id = CommonPatterns.EMPTY_SPACE,
-            organization_id = Numerical.ZERO,
-            domain_id = CommonPatterns.EMPTY_SPACE,
-            user_id = Numerical.ZERO,
-            source_path = CommonPatterns.EMPTY_SPACE,
-            source_lang = CommonPatterns.EMPTY_SPACE,
-            desired_output_mode = CommonPatterns.EMPTY_SPACE,
-            document_type = CommonPatterns.EMPTY_SPACE,
-            desired_output_format = CommonPatterns.EMPTY_SPACE,
-            schema_path = CommonPatterns.EMPTY_SPACE,
+            request_reference_id = entity_prompt_request.request_reference_id or CommonPatterns.EMPTY_SPACE,
+            organization_id = entity_prompt_request.organization_id or  Numerical.ZERO,
+            domain_id = entity_prompt_request.domain_id or  CommonPatterns.EMPTY_SPACE,
+            user_id = entity_prompt_request.user_id or  Numerical.ZERO,
+            desired_output_mode = entity_prompt_request.desired_output_mode or  CommonPatterns.EMPTY_SPACE,
+            desired_output_format = entity_prompt_request.desired_output_format or  CommonPatterns.EMPTY_SPACE,
+            source_file_path = entity_prompt_request.source_file_path or  CommonPatterns.EMPTY_SPACE,
+            source_lang = entity_prompt_request.source_lang or  CommonPatterns.EMPTY_SPACE,
+            document_type = entity_prompt_request.document_type or  CommonPatterns.EMPTY_SPACE,
+            schema_template_filepath = entity_prompt_request.schema_template_filepath or  CommonPatterns.EMPTY_SPACE,
             system_prompt = CommonPatterns.EMPTY_SPACE,
             user_prompt = CommonPatterns.EMPTY_SPACE,
             input_variables = CommonPatterns.EMPTY_SPACE
@@ -266,28 +287,28 @@ class EntityPromptResponseBuilder:
         self.entity_prompt_response.user_id = user_id
         return self
 
-    def with_source_path(self, source_path: str) -> Self:
-        self.entity_prompt_response.source_path = source_path
-        return self
-
-    def with_source_lang(self, source_lang: str) -> Self:
-        self.entity_prompt_response.source_lang = source_lang
-        return self
-
     def with_desired_output_mode(self, desired_output_mode: str) -> Self:
         self.entity_prompt_response.desired_output_mode = desired_output_mode
-        return self
-
-    def with_document_type(self, document_type: str) -> Self:
-        self.entity_prompt_response.document_type = document_type
         return self
 
     def with_desired_output_format(self, desired_output_format: str) -> Self:
         self.entity_prompt_response.desired_output_format = desired_output_format
         return self
 
-    def with_schema_path(self, schema_path: str) -> Self:
-        self.entity_prompt_response.schema_path = schema_path
+    def with_source_file_path(self, source_file_path: str) -> Self:
+        self.entity_prompt_response.source_file_path = source_file_path
+        return self
+
+    def with_source_lang(self, source_lang: str) -> Self:
+        self.entity_prompt_response.source_lang = source_lang
+        return self
+
+    def with_document_type(self, document_type: str) -> Self:
+        self.entity_prompt_response.document_type = document_type
+        return self
+
+    def with_schema_template_filepath(self, schema_template_filepath: str) -> Self:
+        self.entity_prompt_response.schema_template_filepath = schema_template_filepath
         return self
 
     def with_system_prompt(self, system_prompt: str) -> Self:

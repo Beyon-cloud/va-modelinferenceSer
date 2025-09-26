@@ -109,6 +109,8 @@ def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str
     user_prompt_template = prompt_base_json.get("usr_template")
     prompt_input_variables = prompt_base_json.get("input_variables")
     print(f"promptInputVariables --> {prompt_input_variables}")
+    print(f"system_prompt_template --> {system_prompt_template}")
+    print(f"user_prompt_template --> {user_prompt_template}")
 
     if not prompt_template:
         prompt_template = prompt_data.get(org_id, {}).get(prompt_typ, {}).get("general", {}).get("instruction", {}).get("template")
@@ -141,6 +143,27 @@ def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str
         "system_prompt_template": system_prompt_template,
         "user_prompt_template": user_prompt_template,
         "template": prompt_template
+    }
+    return propmpt_output
+
+def get_temp_prompt_template(sys_prompt_tpl: str, usr_prompt_tpl: str) -> Dict[str, Any]:
+
+    if sys_prompt_tpl:
+        system_prompt_template = sys_prompt_tpl.replace("\\n", "\n")
+
+    if usr_prompt_tpl:
+        user_prompt_template = usr_prompt_tpl.replace("\\n", "\n")
+
+    if system_prompt_template and user_prompt_template:
+        customPrompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(system_prompt_template),
+            HumanMessagePromptTemplate.from_template(user_prompt_template)
+        ])
+
+    propmpt_output = {
+        "prompt": customPrompt,
+        "system_prompt_template": system_prompt_template,
+        "user_prompt_template": user_prompt_template
     }
     return propmpt_output
 

@@ -10,6 +10,7 @@ from com.beyoncloud.schemas.rag_reqres_data_model import (
     StructureRespProcessRequest,
     StructureRespProcessResponse
 )
+import com.beyoncloud.config.settings.env_config as config
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,12 @@ async def structure_resp_process(
 ) -> StructureRespProcessResponse:
 
     try:
-        response = await service.inf_structure_resp_process(structure_resp_process_request)
+
+        if config.TEMP_FLOW_YN == "Y":
+            response = await service.temp_structure_resp_process(structure_resp_process_request)
+        else:
+            response = await service.inf_structure_resp_process(structure_resp_process_request)
+        
         return response
     except ValueError as e:
         logger.warning(f"Validation failed: {e}")

@@ -70,9 +70,10 @@ CLARIDATA_FILENAME=os.getenv("CLARIDATA_FILENAME")
 FAISS_DIM=os.getenv("FAISS_DIM")
 
 # Temp code for testing purpose
-ENABLE_HF_INFRENCE = os.getenv("ENABLE_HF_INFRENCE")
+ENABLE_HF_INFRENCE_YN = os.getenv("ENABLE_HF_INFRENCE_YN")
 HF_KEY = os.getenv("HF_KEY")
 HF_MODEL_NAME = os.getenv("HF_MODEL_NAME")
+TEMP_FLOW_YN = os.getenv("TEMP_FLOW_YN")
 
 # Load from yaml file
 script_dir = Path(__file__).parent

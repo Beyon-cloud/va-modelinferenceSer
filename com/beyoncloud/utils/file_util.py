@@ -3,6 +3,7 @@ import yaml
 import json
 import os
 import re
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 from com.beyoncloud.common.constants import Delimiter, FileTypes, CommonPatterns, FileFormats
 import com.beyoncloud.config.settings.env_config as config
@@ -95,6 +96,24 @@ class FileCreation:
 
     def __init__(self):
         pass
+
+    def is_directory(self, dir_path: str) -> bool:
+        dir_path = Path(dir_path)
+
+        # Check directory
+        if dir_path.is_dir():
+            return True
+        else:
+            return False
+
+    def is_file(self, file_path: str) -> bool:
+        file_path = Path(file_path)
+
+        # Check directory
+        if file_path.is_file():
+            return True
+        else:
+            return False
 
     def create_text_file(self, dir_path: str, filename: str, text_content: str) -> str:
         """
@@ -222,7 +241,11 @@ class FetchContent:
 
                     print(f"json_obj ---> {json_obj}")
                     extracted_data = json_obj   # return structured object
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    print("JSONDecodeError:")
+                    print(f"  Error: {e.msg}")          # error message
+                    print(f"  Location: line {getattr(e, 'lineno', '?')}, column {getattr(e, 'colno', '?')}")
+                    print(f"  Input type: {type(output_data)!r}")
                     if isinstance(output_data, str):
                         # fallback to raw cleaned string
                         extracted_data = {"raw_text": output_data}
@@ -290,3 +313,37 @@ class FetchContent:
         full_text = "".join(page.get("text", "") for page in json_data.get("results", []))
         
         return full_text
+
+
+class PathValidator:
+
+    def __init__(self):
+        pass
+
+    def is_directory(self, dir_path: str) -> bool:
+        """
+        Check if the given path is a valid directory.
+        Returns False if path is invalid or inaccessible.
+        """
+
+        if not dir_path:
+            return False
+
+        try:
+            dir_path = Path(dir_path)
+            return dir_path.is_dir()
+        except Exception as e:
+            logger.error(f"Error validating directory path '{dir_path}': {e}")
+            return False
+
+    def is_file(self, file_path: str) -> bool:
+        """
+        Check if the given path is a valid file.
+        Returns False if path is invalid or inaccessible.
+        """
+        try:
+            file_path = Path(file_path)
+            return file_path.is_file()
+        except Exception as e:
+            logger.error(f"Error validating file path '{file_path}': {e}")
+            return False

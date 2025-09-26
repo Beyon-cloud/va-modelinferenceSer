@@ -191,7 +191,7 @@ class RagProcessImpl:
         starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         start_time = time.time()
         rag_generator_process = RagGeneratorProcess()
-        if config.ENABLE_HF_INFRENCE:
+        if config.ENABLE_HF_INFRENCE_YN == "Y":
             response = await rag_generator_process.hf_response(structure_input_data)
         else:
             response = await rag_generator_process.generate_structured_response(structure_input_data)

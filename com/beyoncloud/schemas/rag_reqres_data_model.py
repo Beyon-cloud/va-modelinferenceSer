@@ -98,6 +98,7 @@ class EntityResponse(BaseModel):
     response: str
     status: str
 
+# ======================= RagLogQryModel model Start =======================
 class RagLogQryModel(BaseModel):
     orgId: int
     query: str
@@ -105,8 +106,52 @@ class RagLogQryModel(BaseModel):
     search_result_json: List[Any]
     time_elapsed: float
     metadata: Any
-    
 
+class RagLogQryModelBuilder:
+    """
+    Builder for RagLogQryModel model.
+    Author: Jenson (26-09-2025)
+    """
+    def __init__(self):
+        self.rag_log_qry_model = RagLogQryModel(
+            orgId = Numerical.ZERO, 
+            query = CommonPatterns.EMPTY_SPACE, 
+            response = CommonPatterns.EMPTY_SPACE,
+            search_result_json = [],
+            time_elapsed = Numerical.ZERO,
+            metadata =  {}
+        )
+
+    def with_orgId(self, orgId: int) -> Self:
+        self.rag_log_qry_model.orgId = orgId
+        return self
+
+    def with_query(self, query: str) -> Self:
+        self.rag_log_qry_model.query = query
+        return self
+
+    def with_response(self, response: str) -> Self:
+        self.rag_log_qry_model.response = response
+        return self
+
+    def with_search_result_json(self, search_result_json: str) -> Self:
+        self.rag_log_qry_model.search_result_json = search_result_json
+        return self
+
+    def with_time_elapsed(self, time_elapsed: float) -> Self:
+        self.rag_log_qry_model.time_elapsed = time_elapsed
+        return self
+
+    def with_metadata(self, metadata: dict[str,Any]) -> Self:
+        self.rag_log_qry_model.metadata = metadata
+        return self
+
+    def build(self) -> RagLogQryModel:
+        return self.rag_log_qry_model
+    
+# ======================= RagLogQryModel model End =======================
+
+# ======================= Structure input data model Start =======================
 class StructureInputData(BaseModel):
     source_path: str = Field(..., description="Path to the source text file")
     context_data: str = Field(..., description="Input source text context for the source_path")
@@ -118,7 +163,7 @@ class StructureInputData(BaseModel):
     source_lang: str = Field(..., description="Source file language")
     output_mode: str = Field(..., description="Mode of the output Ex :File,DB,API")
     output_format: str = Field(..., description="Format of the output file")
-    schema_path: str = Field(..., description="Path for structured template")
+    schema_template_filepath: str = Field(..., description="Path for structured template")
 
 class StructureInputDataBuilder:
     """
@@ -137,7 +182,7 @@ class StructureInputDataBuilder:
             source_lang = CommonConstants.DFLT_LANG,
             output_mode = CommonPatterns.EMPTY_SPACE,
             output_format =  CommonPatterns.EMPTY_SPACE,
-            schema_path =  CommonPatterns.EMPTY_SPACE
+            schema_template_filepath =  CommonPatterns.EMPTY_SPACE
         )
 
     def with_source_path(self, source_path: str) -> Self:
@@ -180,15 +225,16 @@ class StructureInputDataBuilder:
         self.structure_input_data.output_format = output_format
         return self
 
-    def with_schema_path(self, schema_path: str) -> Self:
-        self.structure_input_data.schema_path = schema_path
+    def with_schema_template_filepath(self, schema_template_filepath: str) -> Self:
+        self.structure_input_data.schema_template_filepath = schema_template_filepath
         return self
 
     def build(self) -> StructureInputData:
         return self.structure_input_data
 
+# ======================= Structure input data model End =======================
 
-#===================================================
+# ======================= Structure process pequest and Response model start =======================
 class StructureRespProcessRequest(BaseModel):
     """
     Request model for PDF text extraction.
@@ -197,14 +243,19 @@ class StructureRespProcessRequest(BaseModel):
  
     Attributes:
         request_reference_id (str): Unique identifier for the request.
+        document_batch_id (str): Batch ID representing a group of documents.
         organization_id (int): ID of the requesting organization.
         domain_id (str): ID representing the business domain.
         user_id (Optional[int]): ID of the user requesting schema.
-        source_path (str): Source data file path for the schema prompt request.
-        desired_output_mode (str): Domain ID.
-        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
+        desired_output_mode (str): Mode of the output Ex :File,DB,API.
         desired_output_format (str): Format of the output file.
+        source_file_path (str): Source data file path for the structure response process request.
+        source_lang (str): Source file language.
+        document_type (str): Type of document Ex: Property, Insurance,Logistic,....
         output_filename (str): Name of the generated output file.
+        ocr_result_storage_path (str): Location to store OCR results.
+        inference_result_storage_path (str): Location to store inference results.
+        ocr_result_file_path (str): OCR Extracted file path to process.
     """
     request_reference_id: StrictStr = Field(..., description="Unique identifier for the request")
     document_batch_id: StrictStr = Field(..., description="Batch ID representing a group of documents")
@@ -213,13 +264,13 @@ class StructureRespProcessRequest(BaseModel):
     user_id: Optional[StrictInt] = Field(None, description="ID of the user requesting extraction")
     desired_output_mode: StrictStr = Field(..., description="Mode of the output Ex :File,DB,API")
     desired_output_format: StrictStr = Field(..., description="Format of the output file")
-    source_file_path: StrictStr = Field(..., description="Path to the source text file")
+    source_file_path: StrictStr = Field(..., description="Source data file path for the structure response process request")
     source_lang: StrictStr = Field(..., description="Source file language")
     document_type: StrictStr = Field(..., description="Type of document Ex: Property, Insurance,Logistic,...")
     output_filename: Optional[StrictStr] = Field(None, description="Name of the generated output file")
     ocr_result_storage_path: Optional[StrictStr] = Field(None, description="Location to store OCR results")
     inference_result_storage_path: Optional[StrictStr] = Field(None, description="Location to store inference results")
-    ocr_result_file_path: StrictStr = Field(None, description="Extracted file path to process")
+    ocr_result_file_path: StrictStr = Field(None, description="OCR Extracted file path to process")
 
 
 class StructureRespProcessResponse(StructureRespProcessRequest):
@@ -229,7 +280,9 @@ class StructureRespProcessResponse(StructureRespProcessRequest):
     Author: Jenson (10-09-2025)
  
     Attributes:
-        schema_path (str): Requested schema file path.
+        inference_result_file_path (str): Generated inference result file path.
+        status (str): Status of the OCR and inference process.
+        message (str): Detailed message about the processing status.
     """
     inference_result_file_path: StrictStr = Field(..., description="Location to store inference results file")
     status: StrictStr = Field(..., description="Status of the OCR and inference process")
@@ -328,3 +381,5 @@ class StructureRespProcessResponseBuilder:
 
     def build(self) -> StructureRespProcessResponse:
         return self.structure_resp_process_response
+
+# ======================= Structure process pequest and Response model end =======================
