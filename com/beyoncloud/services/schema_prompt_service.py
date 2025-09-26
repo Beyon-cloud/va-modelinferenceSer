@@ -187,35 +187,22 @@ class SchemaPromptService:
 
     async def generate_entity_prompt(self, entity_prompt_request: EntityPromptRequest):
 
-        #schema_prompt = SchemaPrompt()
-        #scheme_prompt_template = await schema_prompt.generate_entity_prompt(entity_prompt_request)
-        #print(scheme_prompt_template)
-
         # Step 1: Extract source document content
-        source_filepath = entity_prompt_request.source_file_path
-        logger.info(f"Loading document: {source_filepath}")
-
-        if not source_filepath:
-            raise ValueError("Source file not availbale to generate prompt")
-    
         text_loader = TextLoader()
-        source_content = text_loader.get_text_content(source_filepath)
-        #logger.info(f"Source Content --> {source_content}")
-        #print(f"Source Content --> {source_content}")   
-        if not source_content:
-            raise ValueError("Document content is empty or could not be extracted")
+        source_content = ""
 
         # Step 2: Extract schema template
 
         schema_filepath = entity_prompt_request.schema_template_filepath
         logger.info(f"Loading document: {schema_filepath}")
-        if not source_filepath:
-            raise ValueError("Source file not availbale to generate prompt")
+        if not schema_filepath:
+            raise ValueError("Schema file not availbale to generate prompt")
+
         schema_template = text_loader.get_text_content(schema_filepath)
         schema_template = schema_template.replace("{", "{{").replace("}", "}}")
         logger.info(f"Schema template --> {schema_template}")
         print(f"Schema template --> {schema_template}")  
-        if not source_content:
+        if not schema_template:
             raise ValueError("Schema template is empty or could not be extracted")
 
         # Step 3: Detect document type
