@@ -18,7 +18,6 @@ from com.beyoncloud.common.constants import FileExtension, Status, PromptType, C
 from com.beyoncloud.services.database_service import DataBaseService
 from com.beyoncloud.schemas.rag_reqres_data_model import StructureInputData, StructureInputDataBuilder
 from com.beyoncloud.processing.rag_process_impl import RagProcessImpl
-from com.beyoncloud.processing.prompt.prompt_generation.document_extraction import DocumentExtraction
 from com.beyoncloud.utils.date_utils import current_date_trim
 
 logger = logging.getLogger(__name__)
