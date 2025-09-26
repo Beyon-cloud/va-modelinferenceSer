@@ -296,8 +296,8 @@ class EnhancedDocumentProcessor:
         
         return schema
     
-    async def generate_extraction_prompts(self, schema: DocumentSchema, content: str, 
-        document_type: DocumentType, 
+    async def generate_extraction_prompts(self, content: str, 
+        document_type: Any, 
         schema_template,
         structure_input_data: StructureInputData
     ) -> Dict[str, str]:
