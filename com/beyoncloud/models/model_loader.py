@@ -21,7 +21,7 @@ class ModelRegistry:
 
     @classmethod
     def _load_llama_model(cls):
-        model_path = config.MODEL_CONFIG.get("local_llama_model")
+        model_path = config.LLM_MODEL_PATH
         logger.info(f"Initializing model from: {model_path}")
         logger.info(f"Using device: {'GPU' if cls.device == "cuda" else 'CPU'}")
 

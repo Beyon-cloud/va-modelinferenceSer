@@ -5,10 +5,11 @@ import json
 from com.beyoncloud.db.postgresql_impl import PostgresSqlImpl
 from langchain.prompts import PromptTemplate
 import com.beyoncloud.config.settings.env_config as config
+from com.beyoncloud.config.settings.config_settings import ConfigSettings
 from com.beyoncloud.utils.file_util import JsonLoader
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from textwrap import dedent
-from com.beyoncloud.common.constants import CommonPatterns
+from com.beyoncloud.common.constants import CommonPatterns, PromptType
 from com.beyoncloud.services.database_service import DataBaseService
 
 class TaskDetail(BaseModel):
@@ -93,7 +94,7 @@ async def generatePromptJson():
 
     return promptFilepath
 
-def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str ) -> Dict[str, Any]:
+def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str, out_typ: str = None ) -> Dict[str, Any]:
 
     json_loader = JsonLoader()
     prompt_file_path = os.path.join(config.PROMPT_FOLDER_PATH, config.PROMPT_FILENAME)
@@ -103,11 +104,26 @@ def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str
     if not prompt_base_json:
         prompt_base_json = prompt_data.get(str(org_id), {}).get(prompt_typ, {}).get(CommonPatterns.ASTRICK, {}).get(CommonPatterns.ASTRICK, {})
     
-    prompt_id = prompt_base_json.get("prompt_id")
-    prompt_template = prompt_base_json.get("template")
-    system_prompt_template = prompt_base_json.get("sys_template")
-    user_prompt_template = prompt_base_json.get("usr_template")
-    prompt_input_variables = prompt_base_json.get("input_variables")
+    is_available = False
+    if prompt_typ == PromptType.SCHEMA_PROMPT:
+        if out_typ:
+            for k, v in prompt_base_json.items():
+                if isinstance(v, dict) and v.get("out_typ") == out_typ:
+                    is_available = True
+                    prompt_id = v.get("prompt_id")
+                    prompt_template = v.get("template")
+                    system_prompt_template = v.get("sys_template")
+                    user_prompt_template = v.get("usr_template")
+                    prompt_input_variables = v.get("input_variables")
+                    break
+
+    if not is_available:
+        prompt_id = prompt_base_json.get("prompt_id")
+        prompt_template = prompt_base_json.get("template")
+        system_prompt_template = prompt_base_json.get("sys_template")
+        user_prompt_template = prompt_base_json.get("usr_template")
+        prompt_input_variables = prompt_base_json.get("input_variables")
+
     print(f"promptInputVariables --> {prompt_input_variables}")
     print(f"system_prompt_template --> {system_prompt_template}")
     print(f"user_prompt_template --> {user_prompt_template}")
@@ -145,6 +161,19 @@ def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str
         "template": prompt_template
     }
     return propmpt_output
+
+async def get_prompt_template1(
+    domain_id: str, 
+    document_typ: str, 
+    org_id: int, 
+    prompt_typ: str, 
+    out_typ: str = None 
+) -> Dict[str, Any]:
+
+    config_settings = ConfigSettings()
+    prompt_temp = await config_settings.get_prompt_template(domain_id,document_typ,org_id,prompt_typ,out_typ)
+    print(f"prompt_temp --> {prompt_temp}")
+    return prompt_temp
 
 def get_temp_prompt_template(sys_prompt_tpl: str, usr_prompt_tpl: str) -> Dict[str, Any]:
 

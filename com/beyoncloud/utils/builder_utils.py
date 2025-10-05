@@ -1,5 +1,5 @@
 ﻿import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from com.beyoncloud.common.constants import CommonPatterns, Numerical, Status
 from com.beyoncloud.config.settings.table_mapper_config import load_table_mapping
@@ -56,7 +56,7 @@ class BuilderUtils:
             .with_sys_gen_schema_prop(oth_val["schema_json"])
             .with_status(oth_val["status"])
             .with_created_by(schema_prompt_request.user_id)
-            .with_created_at(datetime.utcnow())
+            .with_created_at(datetime.now(timezone.utc))
             .build()
         )
 

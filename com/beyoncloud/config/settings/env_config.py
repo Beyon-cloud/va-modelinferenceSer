@@ -75,6 +75,21 @@ HF_KEY = os.getenv("HF_KEY")
 HF_MODEL_NAME = os.getenv("HF_MODEL_NAME")
 TEMP_FLOW_YN = os.getenv("TEMP_FLOW_YN")
 
+LLM_MODEL_PATH = os.getenv("LLM_MODEL_PATH")
+
+# ------------------  Config ------------------
+
+BC_ROOT_PATH=os.getenv(EnvKeys.BC_ROOT_PATH, CommonPatterns.SPACE)
+CONFIG_FILE_PATH=os.getenv(EnvKeys.CONFIG_FILE_PATH, CommonPatterns.SPACE)
+BASE_PATH=f"{BC_ROOT_PATH}{CONFIG_FILE_PATH}"
+
+preload_temp = os.getenv(EnvKeys.PRELOAD_TEMPLATES, CommonPatterns.SPACE).strip()
+PRELOAD_TEMPLATES = [t.strip() for t in preload_temp.split(",") if t.strip()]
+LOAD_ALL_TEMPLATES=os.getenv(EnvKeys.LOAD_ALL_TEMPLATES, CommonPatterns.SPACE)
+
+MT_ID_DFN_CONFIG_TEMPLATE = os.getenv(EnvKeys.MT_ID_DFN_CONFIG_TEMPLATE, CommonPatterns.SPACE)
+MT_ORG_PROMPT_CONFIG_TEMPLATE = os.getenv(EnvKeys.MT_ORG_PROMPT_CONFIG_TEMPLATE, CommonPatterns.SPACE)
+
 # Load from yaml file
 script_dir = Path(__file__).parent
 

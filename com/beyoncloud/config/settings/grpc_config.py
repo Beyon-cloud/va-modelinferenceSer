@@ -67,7 +67,8 @@ class GrpcServers:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                logger.info("Server tasks cancelled during shutdown.")
+                raise
 
 # create a singleton so you can import it easily
 grpc_servers = GrpcServers()
@@ -89,17 +90,19 @@ class BaseGrpcServer:
         bind_address = f"{self.host}:{self.port}"
         logger.info(f"[{self.service_name}] Starting async gRPC server on {bind_address}")
         await self.server.start(self.host, self.port)
-        await self.server.wait_closed()
+        self._server_task = asyncio.create_task(self.server.wait_closed())
 
     async def stop(self, timeout: float = 5.0):
         logger.info(f"[{self.service_name}] Stopping async gRPC server on {self.host}:{self.port}")
         self.server.close()
-        #await self.server.wait_closed()
         try:
-            await asyncio.wait_for(self.server.wait_closed(), timeout)
+            if self._server_task:
+                await asyncio.wait_for(self._server_task, timeout)
             logger.info(f"[{self.service_name}] Shutdown complete.")
         except asyncio.TimeoutError:
             logger.warning(f"[{self.service_name}] Shutdown timeout exceeded. Forcing shutdown.")
+        except asyncio.CancelledError:
+            logger.info(f"[{self.service_name}] wait_closed task cancelled.")
 
 
 class GrpcServerConfigLoader:

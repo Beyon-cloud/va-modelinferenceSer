@@ -28,15 +28,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from com.beyoncloud.config.settings import env_config as env_config
 from com.beyoncloud.db.db_connection import sql_db_connection as sqlDbConn
-#from com.beyoncloud.grpc.config.grpc_client_loader import GrpcClient
-#from com.beyoncloud.grpc.config.grpc_all_servers_loader import grpc_servers
 from com.beyoncloud.config.settings.grpc_config import grpc_servers
+from com.beyoncloud.config.templates.template_loader import TemplateLoader
 
 logger = logging.getLogger(__name__)
 
-#grpc_client = GrpcClient()
 grpc_server = None
 grpc_processes = []
+template_loader = TemplateLoader()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -58,41 +57,21 @@ async def lifespan(app: FastAPI):
 
     global grpc_server, grpc_client, grpc_processes
     try:
+        await template_loader.load_all_templates()
+        logger.info("Configuration templates loaded successfully.")
+
         logger.info("Application DB startup: Initializing ...")
-        #await noSqlDbConn.create_db_indexes()
         await sqlDbConn.initialize()
 
-        #logger.info("Initializing application and loading models...")
-        #ModelRegistry.load_all_models()
-        #model_singleton.modelServiceLoader = ModelServiceLoader() 
-        #logger.info("Models loaded successfully!")
-
         logger.info("Starting gRPC all microservices")
-        #grpc_processes = run_all_servers()
         await grpc_servers.start()
         logger.info("gRPC all microservices started successfully.")
-
-        #logger.info("Creating gRPC client instance")
-        #await grpc_client.start()
-        #grpc_client = GrpcClient()
-        #await grpc_client.init_stub("rag")
-        #logger.info("gRPC client instance created successfully.")
-
-        #logger.info("Creating gRPC server instance")
-        #grpc_server = GrpcServer()
-        #logger.info("gRPC server instance created successfully.")
 
         yield
     finally:
         print("Life span close connection calling.....")
-        #noSqlDbConn.close_connection()
         await sqlDbConn.close_connection()
 
         # gRPC client shutdown
         logger.info("Shutdown gRPC client instance")
         await grpc_servers.shutdown()
-        #await grpc_client.shutdown()
-        # Terminate gRPC microservices cleanly
-        #for proc in grpc_processes:
-        #    proc.terminate()
-        #    proc.join()

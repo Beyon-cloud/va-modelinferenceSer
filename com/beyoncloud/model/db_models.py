@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+﻿from datetime import datetime, timezone
 from typing import Optional, Dict
 from com.beyoncloud.common.constants import Status, CommonConstants
 
@@ -88,7 +88,8 @@ class InfSchemaPromptLogBuilder:
         return self
 
     def with_created_at(self, dt: Optional[datetime] = None):
-        self._obj["created_at"] = dt or datetime.utcnow()
+        aware_dt = dt or datetime.now(timezone.utc)
+        self._obj["created_at"] = aware_dt.replace(tzinfo=None)
         return self
 
     def build(self) -> dict:
@@ -150,7 +151,8 @@ class RagProcessingSourceBuilder:
         return self
 
     def with_published_at(self, dt: Optional[datetime] = None):
-        self._obj["published_at"] = dt or datetime.utcnow()
+        aware_dt = dt or datetime.now(timezone.utc)
+        self._obj["published_at"] = aware_dt.replace(tzinfo=None)
         return self
 
     def with_created_by(self, user: Optional[str]):
@@ -158,7 +160,8 @@ class RagProcessingSourceBuilder:
         return self
 
     def with_created_at(self, dt: Optional[datetime] = None):
-        self._obj["created_at"] = dt or datetime.utcnow()
+        aware_dt = dt or datetime.now(timezone.utc)
+        self._obj["created_at"] = aware_dt.replace(tzinfo=None)
         return self
 
     def build(self) -> dict:

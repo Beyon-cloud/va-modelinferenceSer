@@ -55,6 +55,13 @@ class EnvKeys:
     RAG_GRPC_TIMEOUT = "RAG_GRPC_TIMEOUT"
     RAG_GRPC_ENABLED = "RAG_GRPC_ENABLED"
 
+    BC_ROOT_PATH="BC_ROOT_PATH"
+    CONFIG_FILE_PATH="CONFIG_FILE_PATH"
+    PRELOAD_TEMPLATES="PRELOAD_TEMPLATES"
+    LOAD_ALL_TEMPLATES="LOAD_ALL_TEMPLATES"
+    MT_ID_DFN_CONFIG_TEMPLATE="MT_ID_DFN_CONFIG_TEMPLATE"
+    MT_ORG_PROMPT_CONFIG_TEMPLATE = "MT_ORG_PROMPT_CONFIG_TEMPLATE"
+
 
 class FileTypes:
     """File type constants."""
@@ -158,18 +165,22 @@ class DBConstants:
 
 class Delimiter:
     JSON = "```"
+    CSV = "```"
+    XLSX = "```"
 
 class FileExtension:
     TEXT = ".txt"
     JSON = ".json"
     CSV = ".csv"
     XLSX = ".xlsx"
+    PDF = ".pdf"
 
 class FileFormats:
     TEXT = "txt"
     JSON = "json"
     CSV = "csv"
     XLSX = "xlsx"
+    PDF = "pdf"
 
 class CommonConstants:
     DFLT_LANG = "en"

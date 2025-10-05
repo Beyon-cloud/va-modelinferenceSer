@@ -20,7 +20,7 @@ from com.beyoncloud.processing.prompt.prompt_template import (
     get_prompt_template,get_prompt_param, 
     get_prompt_input_variables,build_prompt,build_universal_prompt, 
     build_universal_prompt1, get_json_extraction_prompt,
-    SafeDict, get_temp_prompt_template
+    SafeDict, get_temp_prompt_template, get_prompt_template1
 )
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
@@ -180,25 +180,22 @@ class RagGeneratorProcess:
         Structured Response Generation
         """
         
-        # Ensure LLM model is properly initialized
-        allModelObjects = model_singleton.modelServiceLoader or ModelServiceLoader()
-        llm = allModelObjects.get_hf_llama_model_pipeline()
-
-        if llm is None:
-            raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
-
-
         # Combine context from search results
         fullContext = structure_input_data.context_data
-        #if structure_input_data.source_path:
-        #    text_loader = TextLoader()
-        #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
         print(f"fullContext -----------> {fullContext}")
+
+        prompt_temp = await get_prompt_template1(
+            structure_input_data.domain_id, structure_input_data.document_type, 
+            structure_input_data.organization_id, structure_input_data.prompt_type,
+            structure_input_data.output_format
+        )
+        print(f"prompt_temp Output -->{prompt_temp["prompt_id"]} -  {prompt_temp["sys_tpl"]}")
 
         # Prompt Generation
         prompt_output = get_prompt_template(
             structure_input_data.domain_id, structure_input_data.document_type, 
-            structure_input_data.organization_id, structure_input_data.prompt_type 
+            structure_input_data.organization_id, structure_input_data.prompt_type,
+            structure_input_data.output_format
         )
         final_prompt = prompt_output["prompt"]
         prompt_id = prompt_output["prompt_id"]

@@ -114,7 +114,8 @@ class PostgresSqlImpl(PostgreSqlInterface):
             if conditions:
                 condition = self.dict_to_conditions_clause(conditions)
             else:
-                condition = " 1 = 1 "
+                dflt_val = "1"
+                condition = f" {dflt_val} = {dflt_val} "
 
             if order_by:
                 orderby_template=config.QUERY_CONFIG['postgres_queries']['order_by']
@@ -170,7 +171,8 @@ class PostgresSqlImpl(PostgreSqlInterface):
             if dyn_select_entity.conditions:
                 condition = self.dict_to_conditions_clause(dyn_select_entity.conditions)
             else:
-                condition = " 1 = 1 "
+                dflt_val = "1"
+                condition = f" {dflt_val} = {dflt_val} "
 
             if dyn_select_entity.order_by:
                 orderby_template=config.QUERY_CONFIG['postgres_queries']['order_by']
@@ -221,7 +223,8 @@ class PostgresSqlImpl(PostgreSqlInterface):
             if conditions:
                 condition = self.dict_to_conditions_clause(conditions)
             else:
-                condition = " 1 = 1 "
+                dflt_val = "1"
+                condition = f" {dflt_val} = {dflt_val} "
 
             query = query_template.format(
                 table_name=table_name,
@@ -253,7 +256,8 @@ class PostgresSqlImpl(PostgreSqlInterface):
             if conditions:
                 condition = self.dict_to_conditions_clause(conditions)
             else:
-                condition = " 1 = 1 "
+                dflt_val = "1"
+                condition = f" {dflt_val} = {dflt_val} "
 
             if update_data:
                 set_clause = self.dict_to_set_clause(update_data)
@@ -291,7 +295,8 @@ class PostgresSqlImpl(PostgreSqlInterface):
             if conditions:
                 condition = self.dict_to_conditions_clause(conditions)
             else:
-                condition = " 1 = 1 "
+                dflt_val = "1"
+                condition = f" {dflt_val} = {dflt_val} "
 
             if order_by:
                 orderby_template=config.QUERY_CONFIG['postgres_queries']['order_by']

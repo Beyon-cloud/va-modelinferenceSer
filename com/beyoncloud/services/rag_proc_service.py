@@ -163,7 +163,7 @@ class InfrenceService:
             file_context = text_loader.get_text_content(structure_resp_process_request.ocr_result_file_path)
         print(f"Step 1 - completed")
 
-        # Step 2: Form schem prompt request
+        # Step 2: Form schema prompt request
         schema_prompt_request = SchemaPromptRequest(
             request_reference_id = structure_resp_process_request.request_reference_id or CommonPatterns.EMPTY_SPACE,
             organization_id = structure_resp_process_request.organization_id or Numerical.ZERO,
@@ -238,19 +238,25 @@ class InfrenceService:
             response = await rag_generator_process.generate_structured_response(structure_input_data)
         print(f"Step 7 - completed")
 
-        # Step 8: Clean response and extract specific file content
-        cleaned_response = fetch_content.fetch_schema_content(response, structure_resp_process_request.desired_output_format)
-        print(f"Step 8 - completed")
-        print(f"cleaned_response --> {cleaned_response}")
-
-        # Step 9: Generate output file
+        # Step 8: Generate output file
         file_extension = FileExtension.TEXT
-        if structure_resp_process_request.desired_output_format == FileFormats.JSON:
+        final_output_format = FileFormats.JSON
+        if (
+            structure_resp_process_request.desired_output_format == FileFormats.JSON
+            or structure_resp_process_request.desired_output_format == FileFormats.CSV
+            or structure_resp_process_request.desired_output_format == FileFormats.XLSX
+            or structure_resp_process_request.desired_output_format == FileFormats.PDF
+        ):
             file_extension = FileExtension.JSON
+            final_output_format = FileFormats.JSON
         elif structure_resp_process_request.desired_output_format == FileFormats.CSV:
             file_extension = FileExtension.CSV
-        elif structure_resp_process_request.desired_output_format == FileFormats.XLSX:
-            file_extension = FileExtension.XLSX
+
+
+        # Step 8: Clean response and extract specific file content
+        cleaned_response = fetch_content.fetch_schema_content(response, final_output_format)
+        print(f"Step 8.1 - completed")
+        print(f"cleaned_response --> {cleaned_response}")
 
         file_creation = FileCreation()
         output_filename = file_creation.generate_file_name(
