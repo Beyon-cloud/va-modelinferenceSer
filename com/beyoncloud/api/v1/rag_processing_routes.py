@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 rag_process_router = APIRouter()
 
 @rag_process_router.post("/process/")
-async def rag_process(ragReqDataModel: RagReqDataModel):
+async def rag_process(rag_req_data_model: RagReqDataModel):
     starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     
-    response = await rag_chat_process(ragReqDataModel)
+    response = await rag_chat_process(rag_req_data_model)
     
     endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")

@@ -18,7 +18,7 @@ from com.beyoncloud.processing.prompt.prompt_template import (
     get_schema, get_prompt_template, get_prompt_param,
     SafeDict
 )
-from com.beyoncloud.common.constants import Delimiter, PromptType
+from com.beyoncloud.common.constants import Delimiter, PromptType, CommonPatterns
 from com.beyoncloud.processing.rag_process_impl import RagProcessImpl
 from com.beyoncloud.schemas.rag_reqres_data_model import StructureInputData, EntityResponse, StructureInputDataBuilder
 
@@ -31,7 +31,6 @@ class EnhancedDocumentProcessor:
     def __init__(self):
         hf_api_key: str = ""
         model_name: str = "meta-llama/Meta-Llama-3-8B-Instruct:novita",
-        config_type: str = "balanced"
 
         # Initialize Hugging Face Llama3 client
         self.llama3_client = HuggingFaceLlama3Client(
@@ -87,7 +86,8 @@ class EnhancedDocumentProcessor:
             # Step 3: Generate schema
             schema = self.generate_schema(document_type, custom_requirements)
 
-            schema_json = await self.generate_schema_template(content, file_path)
+            schema_prompt_request = SchemaPromptRequest()
+            schema_json = await self.generate_schema_template(schema_prompt_request)
             print(f"AFTER ##################################################################### {schema_json}")
             # Step 4: Generate prompts
             prompts = self.generate_extraction_prompts(schema, content, document_type, schema_json)
@@ -228,15 +228,14 @@ class EnhancedDocumentProcessor:
             .build()
         )
         print(f"####### structure_input_data ######### --> {structure_input_data}")
-        ragProcessImpl = RagProcessImpl()
+        rag_process_impl = RagProcessImpl()
 
         # Call the async method and handle possible exceptions
         response = None
         try:
-            response = await ragProcessImpl.generate_structured_response(structure_input_data)
+            response = await rag_process_impl.generate_structured_response(structure_input_data)
         except Exception as exc:
-            # Log or re-raise depending on your application's logging strategy
-            # For example: logger.exception("generate_structured_response failed")
+            print(f"Unexpected error: {exc}")
             raise
 
         extracted_data = ""
@@ -263,7 +262,6 @@ class EnhancedDocumentProcessor:
                 # - raise an error
                 # Here we default to using the raw cleaned_response (escaped) if it's a string
                 if isinstance(cleaned_response, str):
-                    #extracted_data = cleaned_response.replace("{", "{{").replace("}", "}}")
                     extracted_data = cleaned_response
                 else:
                     # re-raise so the caller can see the issue
@@ -302,7 +300,7 @@ class EnhancedDocumentProcessor:
         structure_input_data: StructureInputData
     ) -> Dict[str, str]:
         """Generate extraction prompts"""
-        print(f"generate_extraction_prompts inside")
+        print("generate_extraction_prompts inside")
         prompt_output = get_prompt_template(
             structure_input_data.domain_id, structure_input_data.document_type, 
             structure_input_data.organization_id, structure_input_data.prompt_type 
@@ -331,13 +329,6 @@ class EnhancedDocumentProcessor:
         system_prompt = system_prompt_template.format_map(SafeDict(variable_map))
         user_prompt = user_prompt_template.format_map(SafeDict(variable_map))
 
-        #template = self.schema_templates[document_type]
-        #priorities = template.get_extraction_priorities()
-        #validation_checks = template.get_validation_checks()
-        
-        #system_prompt = self._build_system_prompt(schema, priorities, validation_checks)
-        #user_prompt = self._build_user_prompt(schema, content, priorities, schema_template)
-        
         print(f"system_prompt ---########################-> {system_prompt}")
         print(f"user_prompt -###########################-> {user_prompt}")
         
@@ -381,7 +372,6 @@ class EnhancedDocumentProcessor:
     
     def _build_user_prompt(self, schema: DocumentSchema, content: str, priorities: List[str], schema_json) -> str:
         """Build user prompt for extraction"""
-        #schema_json = self._schema_to_json(schema)
 
         parts = [
             f"Document Type: {schema.document_type.value.title()}",
@@ -457,17 +447,8 @@ class EnhancedDocumentProcessor:
             try:
                 logger.info(f"Attempting extraction with Llama3 (attempt {attempt + 1}/{max_retries})")
                 
-                """
-                response = self.llama3_client.generate_sync(
-                    system_prompt=prompts["system_prompt"],
-                    user_prompt=prompts["user_prompt"],
-                    timeout=self.config.timeout_seconds,
-                    temperature=0.1,
-                    max_tokens=2048
-                )"""
-
-                allModelObjects = model_singleton.modelServiceLoader or ModelServiceLoader()
-                llm = allModelObjects.get_hf_llama_model_pipeline()
+                all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+                llm = all_model_objects.get_hf_llama_model_pipeline()
                 final_prompt = get_schema(prompts)
                 print(f"final_prompt --> {final_prompt}")
 
@@ -481,7 +462,7 @@ class EnhancedDocumentProcessor:
                     inputs
                 )
 
-                print(f"Response ------> \n")
+                print("Response ------> \n")
                 print(response)
                 
                 # Clean response and extract JSON
@@ -545,7 +526,7 @@ class EnhancedDocumentProcessor:
         match = re.search(fr'{delimiter}(.*?){delimiter}', response, re.DOTALL)
         if match:
             return match.group(1)
-        return None
+        return CommonPatterns.EMPTY_SPACE
     
     def _validate_extraction(self, extracted_data: Dict[str, Any], schema: DocumentSchema) -> Dict[str, Any]:
         """Validate extracted data against schema"""

@@ -23,5 +23,5 @@ class ModelServiceLoader:
     def get_llama_tokenizer(self):
         return self.llama_tokenizer
 
-    def getDevice(self):
+    def get_device(self):
         return self.device

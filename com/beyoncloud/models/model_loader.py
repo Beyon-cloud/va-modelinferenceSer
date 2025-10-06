@@ -48,7 +48,6 @@ class ModelRegistry:
             repetition_penalty=1.1,
             return_full_text=False,
             pad_token_id=cls.llama_tokenizer.eos_token_id
-            #device=cls.device
         )
 
         # Wrap with LangChain

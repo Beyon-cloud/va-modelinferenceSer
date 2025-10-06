@@ -96,7 +96,6 @@ class ConfigSettings:
             and rec.get("document_typ") == document_typ 
             and rec.get("out_typ") == out_typ
         ]
-        logger.info("Found %d records for type '%s'", len(filtered), prompt_typ)
         
         if not filtered:
             filtered = [

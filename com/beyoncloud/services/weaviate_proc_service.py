@@ -7,7 +7,7 @@ from com.beyoncloud.datamodel.weaviate_data_model import KnowledgeBase,SearchBas
 
 logger = logging.getLogger(__name__)
 
-async def save_text(knowledge_base: List[KnowledgeBase]):
+def save_text(knowledge_base: List[KnowledgeBase]):
 
     # Initialize Weaviate client (local)
     print("🔌 Connecting to local Weaviate...")
@@ -26,7 +26,7 @@ async def save_text(knowledge_base: List[KnowledgeBase]):
 
     return result
 
-async def search_text(search_base: SearchBase):
+def search_text(search_base: SearchBase):
     weaviate_client = WeaviateClient()
     limit = 5
     if "hybrid" == search_base.search_type:

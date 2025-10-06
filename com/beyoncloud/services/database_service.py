@@ -1,9 +1,6 @@
-﻿# com/beyoncloud/services/database_service.py
-
-import logging
+﻿import logging
 from typing import Dict, Any, List, Optional
 
-#from com.beyoncloud.schemas.website_models import WebsiteData
 from com.beyoncloud.repositories.postgres_repository import PostgreSqlRepository
 from com.beyoncloud.utils.builder_utils import BuilderUtils
 from com.beyoncloud.utils.filter_utils import FilterUtils

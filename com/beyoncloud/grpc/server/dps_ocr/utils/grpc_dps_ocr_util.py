@@ -3,7 +3,7 @@ from com.beyoncloud.grpc.protos.dps_ocr import dps_ocr_to_infrence_service_pb2 a
 from com.beyoncloud.schemas.rag_reqres_data_model import StructureRespProcessResponse
 
 
-def getGrpcDpsOcrInfRespDataModel(structure_resp_process_response: StructureRespProcessResponse) -> pb.DpsOcrToInferenceResponse:
+def get_grpc_dpsocr_inf_resp_datamodel(structure_resp_process_response: StructureRespProcessResponse) -> pb.DpsOcrToInferenceResponse:
 
     grpc_dpsocr_inf_resp_datamodel = pb.DpsOcrToInferenceResponse(
         request_reference_id = structure_resp_process_response.request_reference_id,

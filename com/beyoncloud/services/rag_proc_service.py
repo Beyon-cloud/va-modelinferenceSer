@@ -57,11 +57,10 @@ class InfrenceService:
 
         # Step 1: Read source file context data
         if not structure_resp_process_request.ocr_result_file_path:
-            logger.info(f"OCR result file path is empty")
+            logger.info("OCR result file path is empty")
             raise ValueError("OCR result file path is empty")
 
         fetch_content = FetchContent()
-        file_context = CommonPatterns.EMPTY_SPACE
         file_path = structure_resp_process_request.ocr_result_file_path.lower()
         if file_path.endswith(FileExtension.JSON):
             file_context  = fetch_content.fetch_ocr_content(structure_resp_process_request.ocr_result_file_path)
@@ -92,18 +91,28 @@ class InfrenceService:
         endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
 
-        # Step 4: Clean response and extract specific file content
-        cleaned_response = fetch_content.fetch_schema_content(response, structure_resp_process_request.desired_output_format)
-        print(f"cleaned_response --> {cleaned_response}")
 
-        # Step 5: Generate output file
+
+
+        # Step 4: Generate output file
         file_extension = FileExtension.TEXT
-        if structure_resp_process_request.desired_output_format == FileFormats.JSON:
+        final_output_format = FileFormats.JSON
+        if (
+            structure_resp_process_request.desired_output_format == FileFormats.JSON
+            or structure_resp_process_request.desired_output_format == FileFormats.CSV
+            or structure_resp_process_request.desired_output_format == FileFormats.XLSX
+            or structure_resp_process_request.desired_output_format == FileFormats.PDF
+        ):
             file_extension = FileExtension.JSON
+            final_output_format = FileFormats.JSON
         elif structure_resp_process_request.desired_output_format == FileFormats.CSV:
             file_extension = FileExtension.CSV
-        elif structure_resp_process_request.desired_output_format == FileFormats.XLSX:
-            file_extension = FileExtension.XLSX
+
+
+        # Step 5: Clean response and extract specific file content
+        cleaned_response = fetch_content.fetch_schema_content(response, final_output_format)
+        print("Step 5 - completed")
+        print(f"cleaned_response --> {cleaned_response}")
 
         file_creation = FileCreation()
         output_filename = file_creation.generate_file_name(
@@ -113,8 +122,8 @@ class InfrenceService:
             structure_resp_process_request.request_reference_id,
             file_extension
         )
-
         print(f"output_filename ---> {output_filename}")
+
         path_validator = PathValidator()
         is_valid_directory = path_validator.is_directory(structure_resp_process_request.inference_result_storage_path)
 
@@ -131,7 +140,8 @@ class InfrenceService:
             generated_filepath = file_creation.create_json_file(output_dir_path,output_filename,cleaned_response)
         else:
             generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
-            
+        print("Step 5 - completed")
+
         # Step 6: Response datamodel formation
         structure_resp_process_response = (StructureRespProcessResponseBuilder(structure_resp_process_request)
                     .with_inference_result_file_path(generated_filepath)
@@ -150,18 +160,17 @@ class InfrenceService:
 
         # Step 1: Read source file context data
         if not structure_resp_process_request.ocr_result_file_path:
-            logger.info(f"OCR result file path is empty")
+            logger.info("OCR result file path is empty")
             raise ValueError("OCR result file path is empty")
 
         fetch_content = FetchContent()
-        file_context = CommonPatterns.EMPTY_SPACE
         file_path = structure_resp_process_request.ocr_result_file_path.lower()
         if file_path.endswith(FileExtension.JSON):
             file_context  = fetch_content.fetch_ocr_content(structure_resp_process_request.ocr_result_file_path)
         else:
             text_loader = TextLoader()
             file_context = text_loader.get_text_content(structure_resp_process_request.ocr_result_file_path)
-        print(f"Step 1 - completed")
+        print("Step 1 - completed")
 
         # Step 2: Form schema prompt request
         schema_prompt_request = SchemaPromptRequest(
@@ -179,7 +188,7 @@ class InfrenceService:
             inference_result_storage_path = structure_resp_process_request.inference_result_storage_path or CommonPatterns.EMPTY_SPACE,
             ocr_result_file_path = structure_resp_process_request.ocr_result_file_path or CommonPatterns.EMPTY_SPACE
         )
-        print(f"Step 2 - completed")
+        print("Step 2 - completed")
 
         # Step 3: Call schema prompt generation process
         schema_prompt_service = SchemaPromptService()
@@ -199,11 +208,11 @@ class InfrenceService:
             document_type = structure_resp_process_request.document_type or CommonPatterns.EMPTY_SPACE,
             schema_template_filepath = schema_prompt_response.schema_template_filepath or CommonPatterns.EMPTY_SPACE
         )
-        print(f"Step 4 - completed")
+        print("Step 4 - completed")
 
         # Step 5: Call response prompt generation process
         entity_prompt_response = await schema_prompt_service.generate_entity_prompt(entity_prompt_request)
-        print(f"Step 5 - completed")
+        print("Step 5 - completed")
         print(f"Step 5 - system prompt : {entity_prompt_response.system_prompt}")
         print(f"Step 5 - user prompt : {entity_prompt_response.user_prompt}")
         print(f"Step 5 - input variables : {entity_prompt_response.input_variables}")
@@ -224,19 +233,28 @@ class InfrenceService:
             .with_output_format(structure_resp_process_request.desired_output_format)
             .build()
         )
-        print(f"Step 6 - completed")
+        print("Step 6 - completed")
 
         # Step 7: Call inference model to get final response.
         rag_generator_process = RagGeneratorProcess()
         if config.ENABLE_HF_INFRENCE_YN == "Y":
+            print("Step 7 - if")
             response = await rag_generator_process.temp_hf_response(
                 structure_input_data,
                 entity_prompt_response.system_prompt, 
-                entity_prompt_response.user_prompt
+                entity_prompt_response.user_prompt,
+                entity_prompt_response.input_variables
             )
         else:
-            response = await rag_generator_process.generate_structured_response(structure_input_data)
-        print(f"Step 7 - completed")
+            print("Step 7 - else")
+            #response = await rag_generator_process.generate_structured_response(structure_input_data)
+            response= await rag_generator_process.temp_generate_structured_response(
+                structure_input_data,
+                entity_prompt_response.system_prompt, 
+                entity_prompt_response.user_prompt,
+                entity_prompt_response.input_variables
+            )
+        print("Step 7 - completed")
 
         # Step 8: Generate output file
         file_extension = FileExtension.TEXT
@@ -255,7 +273,7 @@ class InfrenceService:
 
         # Step 8: Clean response and extract specific file content
         cleaned_response = fetch_content.fetch_schema_content(response, final_output_format)
-        print(f"Step 8.1 - completed")
+        print("Step 8.1 - completed")
         print(f"cleaned_response --> {cleaned_response}")
 
         file_creation = FileCreation()
@@ -284,7 +302,7 @@ class InfrenceService:
             generated_filepath = file_creation.create_json_file(output_dir_path,output_filename,cleaned_response)
         else:
             generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
-        print(f"Step 9 - completed")
+        print("Step 9 - completed")
 
         # Step 10: Response datamodel formation
         structure_resp_process_response = (StructureRespProcessResponseBuilder(structure_resp_process_request)
@@ -293,6 +311,6 @@ class InfrenceService:
                     .with_message("File generated successfully")
                     .build()
         )
-        print(f"Step 10 - completed")
+        print("Step 10 - completed")
 
         return structure_resp_process_response

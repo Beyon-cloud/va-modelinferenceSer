@@ -20,8 +20,8 @@ class AdvancedEntityRecognizer:
     def __init__(self):
         self.pattern_model = None
         self.entity_patterns = {}
-        allModelObjects = model_singleton.modelServiceLoader or ModelServiceLoader()
-        self.dslim_ner_pipeline = allModelObjects.get_dslim_ner_pipeline()
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        self.dslim_ner_pipeline = all_model_objects.get_dslim_ner_pipeline()
     
     def _load_models(self):
         """Load NER and pattern recognition models"""
@@ -103,7 +103,8 @@ class AdvancedEntityRecognizer:
             patterns.append({'type': 'date_format', 'confidence': 0.95})
         
         # Pattern: Money format
-        if re.match(r'[$€£¥]\d+(?:,\d{3})*(?:\.\d{2})?|\d+(?:,\d{3})*(?:\.\d{2})?\s*(?:dollars?|euros?|pounds?)', entity_text, re.IGNORECASE):
+        money_pattern = r'([$€£¥]\s?\d+(?:\.\d{2})?|\d+(?:\.\d{2})?\s*(?:dollars?|euros?|pounds?))'
+        if re.match(money_pattern, entity_text, re.IGNORECASE):
             patterns.append({'type': 'money_format', 'confidence': 0.9})
         
         return patterns
@@ -141,7 +142,7 @@ class AdvancedEntityRecognizer:
             })
         
         # URL pattern
-        url_pattern = r'https?://(?:[-\w.])+(?:[:\d]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:#(?:[\w.])*)?)?'
+        url_pattern = r'https?://[\w.-]+(?::\d+)?(?:/[^\s?#]*)*(?:\?[^\s#]*)?(?:#\S*)?'
         for match in re.finditer(url_pattern, text):
             entities.append({
                 'text': match.group(),

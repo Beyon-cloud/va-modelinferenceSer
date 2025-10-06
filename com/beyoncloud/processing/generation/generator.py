@@ -18,8 +18,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from com.beyoncloud.processing.prompt.prompt_template import (
     get_prompt_template,get_prompt_param, 
-    get_prompt_input_variables,build_prompt,build_universal_prompt, 
-    build_universal_prompt1, get_json_extraction_prompt,
+    get_prompt_input_variables,
     SafeDict, get_temp_prompt_template, get_prompt_template1
 )
 from com.beyoncloud.models.model_service import ModelServiceLoader
@@ -52,7 +51,7 @@ class RagGeneratorProcess:
         """
         self.prompt_generator = PromptGenerator()
 
-    async def generateAnswer(self, ragReqDataModel: RagReqDataModel, searchResults: List[Dict[str, Any]]):
+    async def generate_answer(self, rag_req_data_model: RagReqDataModel, search_results: List[Dict[str, Any]]):
         """
         Generates a response using LangChain's prompt templating and a loaded LLM model.
 
@@ -76,103 +75,37 @@ class RagGeneratorProcess:
         
 
         # Ensure LLM model is properly initialized
-        allModelObjects = model_singleton.modelServiceLoader or ModelServiceLoader()
-        llm = allModelObjects.get_hf_llama_model_pipeline()
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        llm = all_model_objects.get_hf_llama_model_pipeline()
 
         if llm is None:
             raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
-        query = self.getQuery(ragReqDataModel)
+        query = self.get_query(rag_req_data_model)
         logger.info(f"Inpur query --> {query}")
         
         # Build chat history string (if available)
-        historyPrompt = []
-        chat_history: List[ChatHistory] = self.getChatHistory(ragReqDataModel)
+        history_prompt = []
+        chat_history: List[ChatHistory] = self.get_chat_history(rag_req_data_model)
         if chat_history:
             for chat in chat_history[-5:]:
-                historyPrompt.append((chat.query, chat.response))
+                history_prompt.append((chat.query, chat.response))
 
 
-        # Combine context from search results
-        fullContext =""
-        list_context = []
-        if searchResults:
-            fullContext = "\n".join([result['chunk'] for result in searchResults])
-            list_context = [result['chunk'] for result in searchResults]
-
-        context = fullContext[:1000]  # safe first
-
-        """
-        customPrompt = get_prompt_template(ragReqDataModel.domain_id, ragReqDataModel.response_type)
-        promptInputVariables = get_prompt_input_variables(ragReqDataModel.domain_id, ragReqDataModel.response_type)
-        
-        variable_map = {
-            "query": query,
-            "context": context,
-            "chat_history": historyPrompt
-        }
-        # Dynamically build the inputs dictionary
-        inputs = {var: variable_map[var] for var in promptInputVariables}
-        print("Inputs : ",inputs)
-        print(f"customPrompt - {customPrompt}")
-        """
         # Prompt Generation
-        
         try:
-            final_prompt = self.prompt_generator.prompt_generator(query,ragReqDataModel.domain_id, searchResults, chat_history)
+            final_prompt = self.prompt_generator.prompt_generator(query,rag_req_data_model.domain_id, search_results, chat_history)
         
         except Exception as e:
             logger.error(f"❌ Error in demonstration: {e}")
             import traceback
             traceback.print_exc()
 
-        #task="Answer the question"
-        #answer_style="one short paragraph"
-        #today=date.today().strftime("%Y-%m-%d")
-        #top_k=len(list_context)
-        #chat_prompt_template = build_universal_prompt1(
-        #    task, 
-        #    query, 
-        #    list_context, 
-        #    top_k, 
-        #    answer_style,
-        #    language="English", 
-        #    max_tokens=256, 
-        #    today=today)
-
-        #print(f"chat_prompt_template --> {chat_prompt_template}")
-
-        #rendered_prompt = customPrompt.format(
-        #    inputs
-        #)
-        #response = llm.invoke(rendered_prompt)
-
-        # ========== LLM CHAIN ==========
-        # Type 1: (Depriciated in langchan, so use Type 2)
-        #chain = LLMChain(llm=llm, prompt=customPrompt)
-        #response = chain.run(inputs)
-
-        # Type 2:
-        #chain = customPrompt | llm
-        #response = chain.invoke(inputs)
-
-        # Type 3:
-        llama_tokenizer = allModelObjects.get_llama_tokenizer()
-        #chat_prompt = build_prompt(fullContext,query,True,llama_tokenizer)
-        #print(f"chat_prompt - {chat_prompt}")
-        #logger.info(f"chat_prompt --> {chat_prompt}")
-        response = llm.invoke(final_prompt)
-        #response = llm.invoke(chat_prompt_template)
+        response = await llm.ainvoke(final_prompt)
 
         print("\n Response:\n", response)
         logger.info(f"Response --> {response}")
 
-
-
-        #llmResponse = llm(customPrompt)[0]['generated_text'] # String prompt
-        #response = llmResponse
-        #if "[/INST]" in llmResponse:
-        #    response = llmResponse.split("[/INST]")[-1].strip()
         return response
 
     async def hf_response(self, structure_input_data: StructureInputData):
@@ -181,8 +114,8 @@ class RagGeneratorProcess:
         """
         
         # Combine context from search results
-        fullContext = structure_input_data.context_data
-        print(f"fullContext -----------> {fullContext}")
+        full_context = structure_input_data.context_data
+        print(f"fullContext -----------> {full_context}")
 
         prompt_temp = await get_prompt_template1(
             structure_input_data.domain_id, structure_input_data.document_type, 
@@ -197,7 +130,6 @@ class RagGeneratorProcess:
             structure_input_data.organization_id, structure_input_data.prompt_type,
             structure_input_data.output_format
         )
-        final_prompt = prompt_output["prompt"]
         prompt_id = prompt_output["prompt_id"]
         input_variables = prompt_output["input_variables"]
         print(f"input_variables1 -->{prompt_id} -  {input_variables}")
@@ -210,20 +142,18 @@ class RagGeneratorProcess:
             api_key=config.HF_KEY,
             model_name=config.HF_MODEL_NAME
         )
-        #isConnect = llama3_client.test_connection
-        #print(f"Is COnnect ----- {isConnect}")
+
         # Test connection
         if not llama3_client.test_connection():
             raise ConnectionError("Failed to connect to Hugging Face Llama3 API")
 
         variable_map = {
-            "context": fullContext,
+            "context": full_context,
             "output_type": structure_input_data.output_format
         }
         for result in param_result:
             param_key = getattr(result, "param_key", None)
             param_value = getattr(result, "param_value", None)
-            #print(f"param_key --> {param_key} - {param_value}")
             if param_key is not None:
                 variable_map[param_key] = param_value
 
@@ -231,7 +161,7 @@ class RagGeneratorProcess:
         user_prompt = prompt_output["user_prompt_template"].format_map(SafeDict(variable_map))
 
         response = llama3_client.generate_sync(
-                    system_prompt=prompt_output["system_prompt_template"],
+                    system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     timeout=60,
                     temperature=0.1,
@@ -250,18 +180,15 @@ class RagGeneratorProcess:
         """
         
         # Ensure LLM model is properly initialized
-        allModelObjects = model_singleton.modelServiceLoader or ModelServiceLoader()
-        llm = allModelObjects.get_hf_llama_model_pipeline()
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        llm = all_model_objects.get_hf_llama_model_pipeline()
 
         if llm is None:
             raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
 
         # Combine context from search results
-        fullContext = structure_input_data.context_data
-        #if structure_input_data.source_path:
-        #    text_loader = TextLoader()
-        #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
+        full_context = structure_input_data.context_data
 
         # Prompt Generation
         prompt_output = get_prompt_template(
@@ -276,32 +203,72 @@ class RagGeneratorProcess:
         print(f"param_result --> {param_result}")
 
         variable_map = {
-            "context": fullContext,
+            "context": full_context,
             "output_type": structure_input_data.output_format
         }
         for result in param_result:
             param_key = getattr(result, "param_key", None)
             param_value = getattr(result, "param_value", None)
-            #print(f"param_key --> {param_key} - {param_value}")
             if param_key is not None:
                 variable_map[param_key] = param_value
-
-        #print(f"variable_map --> {variable_map}")
 
         # Dynamically build the inputs dictionary
         inputs = {var: variable_map[var] for var in input_variables}
         print(f"Inputs : --> {inputs}")
-
-        #final_prompt = get_json_extraction_prompt(fullContext, structure_input_data.prompt_type)
         print(f"final_prompt --> {final_prompt}")
-        #response = llm.invoke(final_prompt)
+
+        # Build runnable sequence (prompt | llm)
+        chain = final_prompt | llm
+        # Invoke asynchronously
+        response = await chain.ainvoke(
+            inputs
+        )
+
+        print("\n Response:\n", response)
+        logger.info(f"Response --> {response}")
+
+        return response
+
+    async def temp_generate_structured_response(self, structure_input_data: StructureInputData,
+        system_prompt: str,
+        user_prompt: str,
+        str_input_variables: str
+    ):
+        """
+        Structured Response Generation
+        """
+        
+        # Ensure LLM model is properly initialized
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        llm = all_model_objects.get_hf_llama_model_pipeline()
+
+        if llm is None:
+            raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
 
-        #inputs = {
-        #    "context": fullContext
-        #}
-        #chain = LLMChain(llm=llm, prompt=final_prompt)
-        #response = chain.run(inputs)
+        # Combine context from search results
+        full_context = structure_input_data.context_data
+
+        # Prompt Generation
+        #prompt_output = get_prompt_template(
+        #    structure_input_data.domain_id, structure_input_data.document_type, 
+        #    structure_input_data.organization_id, structure_input_data.prompt_type 
+        #)
+
+        prompt_output = get_temp_prompt_template(system_prompt, user_prompt, str_input_variables)
+        final_prompt = prompt_output["prompt"]
+        input_variables = prompt_output["input_variables"]
+        print(f"input_variables1 -->  {input_variables}")
+
+        variable_map = {
+            "context": full_context,
+            "output_type": structure_input_data.output_format
+        }
+
+        # Dynamically build the inputs dictionary
+        inputs = {var: variable_map[var] for var in input_variables}
+        print(f"Inputs : --> {inputs}")
+        print(f"final_prompt --> {final_prompt}")
 
         # Build runnable sequence (prompt | llm)
         chain = final_prompt | llm
@@ -317,20 +284,22 @@ class RagGeneratorProcess:
 
     async def temp_hf_response(self, structure_input_data: StructureInputData,
         system_prompt: str,
-        user_prompt: str                           
+        user_prompt: str,
+        str_input_variables: str
     ):
         """
         Structured Huggingface Response Generation
         """
         
         # Get context data
-        fullContext = structure_input_data.context_data
-        print(f"fullContext -----------> {fullContext}")
+        full_context = structure_input_data.context_data
+        print(f"fullContext -----------> {full_context}")
 
         # Prompt Generation
         prompt_output = get_temp_prompt_template(
             system_prompt, 
-            user_prompt 
+            user_prompt,
+            str_input_variables
         )
 
         llama3_client = HuggingFaceLlama3Client(
@@ -343,7 +312,7 @@ class RagGeneratorProcess:
             raise ConnectionError("Failed to connect to Hugging Face Llama3 API")
 
         variable_map = {
-            "context": fullContext,
+            "context": full_context,
             "output_type": structure_input_data.output_format
         }
 
@@ -381,7 +350,7 @@ class RagGeneratorProcess:
                 .with_orgId(structure_input_data.organization_id)
                 .with_query(CommonPatterns.EMPTY_SPACE)
                 .with_response(response)
-                .with_search_result_json([fullContext])
+                .with_search_result_json([full_context])
                 .with_time_elapsed(elapsed)
                 .with_metadata(metadata)
                 .build()
@@ -416,14 +385,14 @@ class RagGeneratorProcess:
             self.table_settings.get_db_column_name("schema1", "RagQryLogs", "metadata"): rag_log_qry_model.metadata,
 
         }
-        RagQryLogs = pg_conn.Base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
-        qry_log = RagQryLogs(**column_data)
+        rag_qry_logs = pg_conn.Base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
+        qry_log = rag_qry_logs(**column_data)
         pg = PostgresSqlImpl()
         await pg.sqlalchemy_insert_one(qry_log, return_field = None)
 
-        logger.info(f"RAG Query log data saved successfully.")
+        logger.info("RAG Query log data saved successfully.")
 
-    def getQuery(self, ragReqDataModel: RagReqDataModel):
+    def get_query(self, rag_req_data_model: RagReqDataModel):
         """
         Extracts the latest user query from the RAG request model.
 
@@ -435,36 +404,36 @@ class RagGeneratorProcess:
         """
 
         query = ""
-        userInputs = ragReqDataModel.user_input
-        print(userInputs)
-        if userInputs:
-            queryLst = [ui.content for ui in userInputs if (ui.type == "text" or ui.type == "audio") and ui.content]
-            query = queryLst[0]
+        user_inputs = rag_req_data_model.user_input
+        print(user_inputs)
+        if user_inputs:
+            query_lst = [ui.content for ui in user_inputs if (ui.type == "text" or ui.type == "audio") and ui.content]
+            query = query_lst[0]
 
         return query
 
-    def getChatHistory(self, ragReqDataModel: RagReqDataModel) -> List[Dict[str, str]]:
+    def get_chat_history(self, rag_req_data_model: RagReqDataModel) -> List[Dict[str, str]]:
         """
         Constructs the chat history as a list of query-response pairs for use in the prompt.
 
         Args:
-            ragReqDataModel (RagReqDataModel): The RAG input containing past dialog history.
+            rag_req_data_model (RagReqDataModel): The RAG input containing past dialog history.
 
         Returns:
             List[ChatHistory]: List of ChatHistory objects representing prior exchanges.
         """
 
-        dialogDetails = ragReqDataModel.context.dialogDetails
-        chatHistory: List[ChatHistory] = []
-        for dialog in dialogDetails:
-            userInputs: List[UserInput] = dialog.user_input
-            if userInputs:
-                queryLst = [ui.content for ui in userInputs if (ui.type == "text" or ui.type == "audio") and ui.content]
-                queryStr = queryLst[0]
+        dialog_details = rag_req_data_model.context.dialogDetails
+        chat_history: List[ChatHistory] = []
+        for dialog in dialog_details:
+            user_inputs: List[UserInput] = dialog.user_input
+            if user_inputs:
+                query_lst = [ui.content for ui in user_inputs if (ui.type == "text" or ui.type == "audio") and ui.content]
+                query_str = query_lst[0]
 
-            chatHistory.append(
-                ChatHistory(query= queryStr, response= dialog.response.text)
+            chat_history.append(
+                ChatHistory(query= query_str, response= dialog.response.text)
             )
-        print(chatHistory)
-        return chatHistory
+        print(chat_history)
+        return chat_history
 

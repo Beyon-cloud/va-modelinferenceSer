@@ -1,28 +1,11 @@
-﻿import torch
-import torch.nn as nn
-import numpy as np
-from transformers import (
-    AutoTokenizer, AutoModelForTokenClassification, AutoModelForSequenceClassification,
-    BertTokenizer, BertForSequenceClassification, BertModel, BertConfig,
-    pipeline, Trainer, TrainingArguments, AutoModel
-)
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.preprocessing import LabelEncoder
-import pandas as pd
+﻿import numpy as np
 import json
 import re
 import pickle
-from typing import List, Dict, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
+from typing import List, Dict, Any, Tuple
 import warnings
 import logging
 from datetime import datetime
-import os
 warnings.filterwarnings('ignore')
 from com.beyoncloud.utils.file_util import JsonLoader
 import com.beyoncloud.config.settings.env_config as config
@@ -564,13 +547,13 @@ class DynamicPromptRouter:
         
         logger.info(f"📋 Context Requirements: {', '.join(analysis.context_requirements)}")
         
-        logger.info(f"🎨 Suggested Prompt Types:")
+        logger.info("🎨 Suggested Prompt Types:")
         for i, prompt_type in enumerate(analysis.suggested_prompt_types[:3], 1):
             logger.info(f"   {i}. {prompt_type.value.upper()}")
         
         logger.info(f"🏆 Overall Confidence: {analysis.confidence_scores['overall']:.3f}")
         
-        logger.info(f"🔬 Model Predictions Summary:")
+        logger.info("🔬 Model Predictions Summary:")
         for model_name, prediction in analysis.model_predictions.items():
             logger.info(f"   • {model_name}: {prediction.confidence:.3f} confidence")
         
@@ -674,146 +657,28 @@ class DynamicPromptRouter:
         return final_prompt
 
     
-    def _generate_instruction_prompt(self,query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        complexity_instruction = {
-            'simple': "Identify and extract",
-            'moderate': "Carefully extract and classify",
-            'complex': "Perform comprehensive extraction and analysis of",
-            'expert': "Execute advanced extraction and detailed analysis of"
-        }
-        
-        instruction = complexity_instruction.get(analysis.complexity.name.lower(), "Extract")
-        confidence_note = f"\nConfidence threshold: {analysis.confidence_scores['overall']:.2f}" if analysis.confidence_scores['overall'] < 0.8 else ""
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-        )
-    
-    def _generate_few_shot_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        examples = self._get_domain_examples(analysis.domain, entity_str)
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
-    def _generate_cot_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        reasoning_steps = self._get_reasoning_steps(analysis)
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
-    def _generate_role_based_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        role_description = self._get_expert_role(analysis.domain, analysis.complexity)
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
-    def _generate_structured_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        schema = self._generate_dynamic_schema(entity_str, analysis)
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
-    def _generate_interactive_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
-    def _generate_context_aware_prompt(self, query: str, entity_str: str, domain_context: str, text: str, analysis: QueryAnalysis) -> str:
-        context_info = self._build_context_information(analysis)
-        
-        return (
-            f"You are a helpful AI assistant."
-            f"You will be given retrieved documents and a user question."
-            f"Use only the information from the retrieved documents to answer."
-            f"If the documents do not contain the answer, say:"
-            f"The retrieved documents do not contain the answer.\n\n"
-            f"Retrieved Documents:"
-            f"{text}\n\n"
-            f"Question:"
-            f"{query}\n\n"
-            f"Answer:"
-        )
-    
     def _get_domain_examples(self, domain: str, entity_str: str) -> str:
         """Generate domain-specific examples"""
         examples = {
-            "medical": f"""Example 1: "Dr. Sarah Johnson treated the patient at Mayo Clinic."
+            "medical": """Example 1: "Dr. Sarah Johnson treated the patient at Mayo Clinic."
 → Entities: [{{"text": "Dr. Sarah Johnson", "type": "PERSON", "confidence": 0.95}}, {{"text": "Mayo Clinic", "type": "ORGANIZATION", "confidence": 0.92}}]
 
 Example 2: "The patient was diagnosed with diabetes and prescribed metformin."
 → Entities: [{{"text": "diabetes", "type": "CONDITION", "confidence": 0.89}}, {{"text": "metformin", "type": "MEDICATION", "confidence": 0.94}}]""",
             
-            "legal": f"""Example 1: "Johnson & Associates represented Apple Inc. in the patent case."
+            "legal": """Example 1: "Johnson & Associates represented Apple Inc. in the patent case."
 → Entities: [{{"text": "Johnson & Associates", "type": "ORGANIZATION", "confidence": 0.93}}, {{"text": "Apple Inc.", "type": "ORGANIZATION", "confidence": 0.96}}]
 
 Example 2: "The Supreme Court ruled in favor of the defendant."
 → Entities: [{{"text": "Supreme Court", "type": "ORGANIZATION", "confidence": 0.98}}]""",
             
-            "financial": f"""Example 1: "Microsoft's stock price rose to $350.50 per share."
+            "financial": """Example 1: "Microsoft's stock price rose to $350.50 per share."
 → Entities: [{{"text": "Microsoft", "type": "ORGANIZATION", "confidence": 0.96}}, {{"text": "$350.50", "type": "MONEY", "confidence": 0.94}}]
 
 Example 2: "Goldman Sachs invested $2.5 billion in the startup."
 → Entities: [{{"text": "Goldman Sachs", "type": "ORGANIZATION", "confidence": 0.95}}, {{"text": "$2.5 billion", "type": "MONEY", "confidence": 0.93}}]""",
             
-            "general": f"""Example 1: "John Smith works at Google in California."
+            "general": """Example 1: "John Smith works at Google in California."
 → Entities: [{{"text": "John Smith", "type": "PERSON", "confidence": 0.92}}, {{"text": "Google", "type": "ORGANIZATION", "confidence": 0.96}}, {{"text": "California", "type": "LOCATION", "confidence": 0.89}}]
 
 Example 2: "The meeting is scheduled for January 15, 2024."
@@ -1134,19 +999,19 @@ def demonstrate_complete_model_system():
         print(f"\n🎯 SELECTED PROMPT TYPE: {result['selected_prompt_type'].value.upper()}")
         print(f"🏆 ROUTING CONFIDENCE: {result['routing_confidence']:.3f}")
         
-        print(f"\n📝 GENERATED PROMPT:")
+        print("\n📝 GENERATED PROMPT:")
         print("-" * 40)
         print(result["generated_prompt"])
         
-        print(f"\n🧠 MODEL PREDICTIONS:")
+        print("\n🧠 MODEL PREDICTIONS:")
         for model_name, prediction in result['model_predictions'].items():
             print(f"   • {model_name}: {prediction.model_name} - {prediction.confidence:.3f}")
         
-        print(f"\n💡 ROUTING REASONING:")
+        print("\n💡 ROUTING REASONING:")
         print(result['routing_reasoning'])
         
         if result.get('alternative_prompts'):
-            print(f"\n🔄 ALTERNATIVE PROMPT TYPES:")
+            print("\n🔄 ALTERNATIVE PROMPT TYPES:")
             for alt_type in result['alternative_prompts'].keys():
                 print(f"   • {alt_type.upper()}")
         
@@ -1161,7 +1026,7 @@ def demonstrate_complete_model_system():
     
     return router
 
-def run_performance_analysis(router: DynamicPromptRouter):
+def run_performance_analysis():
     """Run performance analysis on the model system"""
     print("\n🏃‍♂️ PERFORMANCE ANALYSIS")
     print("=" * 50)
@@ -1200,11 +1065,11 @@ def run_performance_analysis(router: DynamicPromptRouter):
         })
     
     # Display results
-    print(f"📊 Performance Results:")
+    print("📊 Performance Results:")
     print(f"   Total processing time: {total_time:.3f} seconds")
     print(f"   Average time per query: {total_time/len(test_queries):.3f} seconds")
     print(f"   Average confidence: {np.mean([r['confidence'] for r in results]):.3f}")
     
-    print(f"\n📈 Individual Results:")
+    print("\n📈 Individual Results:")
     for result in results:
         print(f"   • {result['query']}: {result['processing_time']:.3f}s (conf: {result['confidence']:.3f})")

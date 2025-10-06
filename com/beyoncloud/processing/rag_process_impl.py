@@ -49,12 +49,12 @@ class RagProcessImpl:
 
         starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         start_time = time.time()
-        query = self.getQuery(ragReqDataModel)
+        query = self.get_query(ragReqDataModel)
         orgId = self.getOrgId(ragReqDataModel)
 
         ragGeneratorProcess = RagGeneratorProcess()
-        chatHistory = self.getChatHistory(ragReqDataModel)
-        response = await ragGeneratorProcess.generateAnswer(ragReqDataModel,query, search_result, chatHistory)
+        chatHistory = self.get_chat_history(ragReqDataModel)
+        response = await ragGeneratorProcess.generate_answer(ragReqDataModel,query, search_result, chatHistory)
         endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
@@ -100,7 +100,7 @@ class RagProcessImpl:
         ragRespDataModel = self.getRagRespDataModel(ragReqDataModel, response)
         return ragRespDataModel
 
-    def getQuery(self, ragReqDataModel: RagReqDataModel):
+    def get_query(self, ragReqDataModel: RagReqDataModel):
         """
         Extracts the latest user query from the RAG request model.
 
@@ -134,7 +134,7 @@ class RagProcessImpl:
         orgId = ragReqDataModel.org_id
         return orgId
 
-    def getChatHistory(self, ragReqDataModel: RagReqDataModel) -> List[Dict[str, str]]:
+    def get_chat_history(self, ragReqDataModel: RagReqDataModel) -> List[Dict[str, str]]:
         """
         Constructs the chat history as a list of query-response pairs for use in the prompt.
 
@@ -191,9 +191,12 @@ class RagProcessImpl:
         starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         start_time = time.time()
         rag_generator_process = RagGeneratorProcess()
+        print(f"impl_start : {config.ENABLE_HF_INFRENCE_YN}")
         if config.ENABLE_HF_INFRENCE_YN == "Y":
+            print("impl_if")
             response = await rag_generator_process.hf_response(structure_input_data)
         else:
+            print("impl_else")
             response = await rag_generator_process.generate_structured_response(structure_input_data)
 
         
@@ -201,15 +204,10 @@ class RagProcessImpl:
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         print(f"Start time : {starttime} --> End time : {endtime} --> elapsed: {elapsed}")
-        #print(response)
         try:
             
             fullContext = structure_input_data.context_data
             file_path = structure_input_data.source_path
-            #if structure_input_data.source_path:
-            #    text_loader = TextLoader()
-            #    fullContext = text_loader.get_text_content(structure_input_data.source_path)
-            #    file_path = structure_input_data.source_path
             search_result_json = [fullContext]
 
             metadata = {
@@ -234,7 +232,6 @@ class RagProcessImpl:
         except Exception as e:
             logger.error(f"Error processing RAG query log save : {e}")
 
-        #rag_resp_datamodel = self.get_entity_resp_model(structure_input_data, response)
         return response
 
     def get_entity_resp_model(self, structure_input_data: StructureInputData, response: str) -> EntityResponse:
@@ -284,4 +281,4 @@ class RagProcessImpl:
         pg = PostgresSqlImpl()
         await pg.sqlalchemy_insert_one(qry_log, return_field = None)
 
-        logger.info(f"RAG Query log data saved successfully.")
+        logger.info("RAG Query log data saved successfully.")

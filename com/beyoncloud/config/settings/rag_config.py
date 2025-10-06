@@ -91,7 +91,6 @@ class RagProcessingSettings:
     def request_headers(self) -> dict:
         raw_headers = self.web_scraping.get("request_headers", {})
         if raw_headers.get("user_agent") == "random":
-            bot_identifier = raw_headers.get("bot_identifier", "")
             raw_headers["user_agent"] = user_agent.strip()
             logger.info(f"raw_headers for the request {raw_headers}")
         return {k.title(): v for k, v in raw_headers.items()}

@@ -65,25 +65,25 @@ def convertPathToImageMulti(lstFilepath: List[str]):
     return [Image.open(Path(path)) for path in lstFilepath]
 
 @staticmethod
-def convertPathToImageSingle(filepath: str):
+def convert_path_to_image_single(filepath: str):
     return [Image.open(Path(filepath))]
 
 @staticmethod
-def convertTextToDocument(text: str) -> Document:
+def convert_text_to_document(text: str) -> Document:
     return [Document(page_content=text)]
 
 @staticmethod
-def convertMulitTextToDocument(textList: List[str]) -> List[Document]:
+def convert_mulit_text_to_document(textList: List[str]) -> List[Document]:
     documentList = [Document(page_content=text) for text in textList]
     return documentList
 
 @staticmethod
-def convertBasemodelToDict(bsaeModel: BaseModel) -> Dict[str, Any]:
+def convert_basemodel_to_dict(bsaeModel: BaseModel) -> Dict[str, Any]:
     dictOutput = bsaeModel.model_dump()
     return dictOutput
 
 @staticmethod
-def convertDictToBasemodel(dictData, baseModel: Type[BaseModel]) -> BaseModel:
+def convert_dict_to_basemodel(dictData, baseModel: Type[BaseModel]) -> BaseModel:
     baseModelInstance = None
     try:
         baseModelInstance = baseModel(**dictData)

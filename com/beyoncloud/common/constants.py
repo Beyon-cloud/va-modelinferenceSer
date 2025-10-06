@@ -120,6 +120,7 @@ class RepositoryOps:
     LIKE = "LIKE"
     ILIKE = "ILIKE"
     IS = "IS"
+    ORDER_BY_WITH_PT = "{order_by}"
 
 
 class RepositoryKeys:

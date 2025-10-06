@@ -6,6 +6,7 @@ from com.beyoncloud.db.postgresql_connectivity import PostgreSqlConnectivity
 from com.beyoncloud.db.table_data_model import DynSelectEntity
 import com.beyoncloud.config.settings.env_config as config
 from sqlalchemy import select, Column, Integer, String, JSON, and_, asc, desc, join, func
+from com.beyoncloud.common.constants import RepositoryOps
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 keys=keys,
                 values_placeholders=values_placeholders
             )
-            print("query : "+query)
+
             logger.debug(f"Create query: {query} with values: {values}")
             async with self.postgres_client.connection() as conn:
                 await conn.fetchrow(query, *values)
@@ -142,7 +143,7 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 )
             else:
                 query = final_query_template
-            print("query : "+query)
+
             logger.debug(f"Created query: {query}")
             async with self.postgres_client.connection() as conn:
                 return await conn.fetch(query)
@@ -193,13 +194,13 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 orderby_template=orderby_template,
                 limit=dyn_select_entity.top_k
             )
-            if "{order_by}" in final_query_template.lower():
+            if RepositoryOps.ORDER_BY_WITH_PT in final_query_template.lower():
                 query = final_query_template.format(
                     order_by = order_by_str
                 )
             else:
                 query = final_query_template
-            print("query : "+query)
+
             logger.debug(f"Created query: {query}")
             async with self.postgres_client.connection() as conn:
                 return await conn.fetch(query)
@@ -230,7 +231,7 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 table_name=table_name,
                 condition=condition
             )
-            print("query : "+query)
+
             logger.debug(f"Created query: {query}")
             async with self.postgres_client.connection() as conn:
                 result = await conn.execute(query)
@@ -267,7 +268,7 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 column_name=set_clause,
                 condition=condition
             )
-            print("query : "+query)
+
             logger.debug(f"Created query: {query}")
             async with self.postgres_client.connection() as conn:
                 result = await conn.execute(query)
@@ -317,13 +318,13 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 orderby_template=orderby_template,
                 limit=top_k
             )
-            if "{order_by}" in final_query_template.lower():
+            if RepositoryOps.ORDER_BY_WITH_PT in final_query_template.lower():
                 query = final_query_template.format(
                     order_by = order_by_str
                 )
             else:
                 query = final_query_template
-            print("query : "+query)
+
             logger.debug(f"Created query: {query}")
             async with self.postgres_client.connection() as conn:
                 return await conn.fetch(query)
@@ -424,14 +425,13 @@ class PostgresSqlImpl(PostgreSqlInterface):
             session.add_all(record_list)
 
     # Method using for fetch the record based on query and param value
-    async def query_select(self, queryKey: str, paramValue: List[Any] = []) -> List[Record]:
+    async def query_select(self, query_key: str, param_value: List[Any] = []) -> List[Record]:
 
-        query_template = config.QUERY_CONFIG['postgres_queries'][queryKey]
+        query_template = config.QUERY_CONFIG['postgres_queries'][query_key]
         
-        #print("query_template : "+query_template)
         logger.debug(f"Select query: {query_template}")
         async with self.postgres_client.connection() as conn:
-            return await conn.fetch(query_template, *paramValue)
+            return await conn.fetch(query_template, *param_value)
 
     async def sqlalchemy_get_max_seqno(
         self,
@@ -478,7 +478,6 @@ class PostgresSqlImpl(PostgreSqlInterface):
         async with self.postgres_client.orm_session() as session:
             # Select entire model or specific columns
             if column_names:
-                #select_columns = [getattr(model, col) for col in column_names]
                 stmt = select(*column_names)
             else:
                 stmt = select(model)
@@ -486,8 +485,6 @@ class PostgresSqlImpl(PostgreSqlInterface):
             # Add WHERE clause if filters provided
             if filters:
                 stmt = stmt.where(and_(*filters))
-                #for key, value in filters.items():
-                #    stmt = stmt.where(getattr(model, key) == value)
 
             # Add ORDER BY
             if order_by:

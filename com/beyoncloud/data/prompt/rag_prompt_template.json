@@ -1,6 +1,60 @@
 {
   "1": {
     "SCHEMA_PROMPT": {
+      "logistics": {
+        "invoice_pdf": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates structured PDF section templates from invoice or business document text.\n\nRules:\n- Return only a valid JSON object describing PDF sections.\n- The template must include \"Sections\", each with \"Title\" and \"Fields\".\n- Fields must be names of entities from the document.\n- Use consistent naming (CamelCase or snake_case).\n- No explanations or extra text.\n- Wrap the output inside a fenced code block starting with ```pdf.",
+          "usr_template": "Generate a PDF section template for the document text below.\n\nGuidelines:\n- Infer an appropriate name/title from the document (e.g., Invoice, RentalAgreement).\n- Cover ALL explicit fields/entities mentioned in the document text.\n- Do not invent data or include sample rows.\n\nDocument Text:\n\"\"\"{context}\"\"\"",
+          "out_typ": "pdf",
+          "prompt_id": 18
+        },
+        "invoice": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates JSON Schema templates from invoice or business document text.\n\nRules:\n- Return only a valid JSON Schema.\n- The schema must include: \"title\", \"type\", and \"properties\".\n- Always return only a valid {output_type} Schema with 'title', 'type', and 'properties'.\n- Use consistent naming (CamelCase or snake_case).\n- No explanations or extra text.\n- Wrap the schema inside a fenced code block starting with ```json_schema.",
+          "usr_template": "Generate a JSON Schema template for the document text below.\nInfer an appropriate 'title' from the document type or content (e.g., 'RentalAgreement', 'PropertyDeed').\nUse standard {output_type} Schema draft-07/draft-2019-09 conventions: include 'title'and 'type'.\nFor each property, provide an appropriate 'type' (string, integer, number, boolean, object, array).\nWhen a field can repeat (e.g., multiple items), model it as an 'array' with an 'items' schema.\nMark fields as 'required' when they are explicitly present in the document.\nDo not invent values or add sample values\u2014only define the schema shape and constraints inferred from the text.\nIf a field's type is ambiguous, choose the most general appropriate type and note optional formats via 'format' or 'pattern'.\nReturn strictly valid {output_type} (no comments, no extra text and no revised version).\n\nDocument Text:\n\"\"\"{context}\"\"\"",
+          "out_typ": "json",
+          "prompt_id": 15
+        },
+        "invoice_xlsx": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates Excel sheet templates (XLSX) from invoice or business document text.\n\nRules:\n- Return only a valid Excel template in JSON format.\n- The template must include \"SheetName\" and \"Columns\".\n- Columns must be objects with \"Name\" and \"Type\".\n- Use consistent naming (CamelCase or snake_case).\n- No explanations or extra text.\n- Wrap the output inside a fenced code block starting with ```xlsx.",
+          "usr_template": "Generate an XLSX sheet template for the document text below.\n\nGuidelines:\n- Infer an appropriate name/title from the document (e.g., Invoice, RentalAgreement).\n- Cover ALL explicit fields/entities mentioned in the document text.\n- Do not invent data or include sample rows.\n- Use consistent column/property naming (choose one style for the whole template).\n- Return strictly valid {output_format} content only, wrapped in a single fenced code block as specified by the system prompt.\n\nDocument Text:\n\"\"\"{context}\"\"\"",
+          "out_typ": "xlsx",
+          "prompt_id": 16
+        },
+        "invoice_csv": {
+          "template": "",
+          "input_variables": [
+            "doc_name",
+            "doc_details",
+            "output_type",
+            "context"
+          ],
+          "sys_template": "You are an AI that generates CSV header templates from invoice or business document text.\n\nRules:\n- Return only a valid CSV header row.\n- The header must include all fields/entities mentioned in the document.\n- Use consistent naming (CamelCase or snake_case).\n- No explanations or extra text.\n- Wrap the output inside a fenced code block starting with ```csv.",
+          "usr_template": "Generate a CSV header row template for the document text below.\n\nGuidelines:\n- Infer an appropriate name/title from the document (e.g., Invoice, RentalAgreement).\n- Cover ALL explicit fields/entities mentioned in the document text.\n- Do not invent data or include sample rows.\n- Use consistent column/property naming (choose one style for the whole template).\n- Return strictly valid {output_format} content only, wrapped in a single fenced code block as specified by the system prompt.\n\nDocument Text:\n\"\"\"{context}\"\"\"",
+          "out_typ": "csv",
+          "prompt_id": 17
+        }
+      },
       "*": {
         "*": {
           "template": "",
@@ -12,23 +66,8 @@
           ],
           "sys_template": "You are an AI that generates {output_type} Schema templates from {doc_name} document text.\n{doc_details}\nYour task is to carefully analyze the input and design a {output_type} Schema that captures ALL available\nentities mentioned in the document.\nAlways return only a valid {output_type} Schema with 'title', 'type', and 'properties'.\nNo explanation, only {output_type}.",
           "usr_template": "Generate a {output_type} Schema for the following document text.\nInfer an appropriate 'title' from the document type or content (e.g., 'RentalAgreement', 'PropertyDeed').\nUse standard {output_type} Schema draft-07/draft-2019-09 conventions: include 'title'and 'type'.\nFor each property, provide an appropriate 'type' (string, integer, number, boolean, object, array).\nWhen a field can repeat (e.g., multiple tenants, witnesses), model it as an 'array' with an 'items' schema.\nMark fields as 'required' when they are explicitly present in the document.\nDo not invent values or add sample values\u2014only define the schema shape and constraints inferred from the text.\nIf a field's type is ambiguous, choose the most general appropriate type and note optional formats via 'format' or 'pattern'.\nReturn strictly valid {output_type} (no comments, no extra text and no revised version).\n\\n\\nDocument Text:\\n\\\"\\\"\\\"{context}\\\"\\\"\\\"",
-          "out_typ": "JSON",
+          "out_typ": "json",
           "prompt_id": 12
-        }
-      },
-      "logistics": {
-        "invoice": {
-          "template": "",
-          "input_variables": [
-            "doc_name",
-            "doc_details",
-            "output_type",
-            "context"
-          ],
-          "sys_template": "You are an AI that generates {output_type} Schema templates from {doc_name} document text.\n{doc_details}\nYour task is to carefully analyze the input and design a {output_type} Schema that captures ALL available\nentities mentioned in the document.\nAlways return only a valid {output_type} Schema with 'title', 'type', and 'properties'.\nNo explanation, only {output_type}.",
-          "usr_template": "Generate a {output_type} Schema for the following document text.\nInfer an appropriate 'title' from the document type or content (e.g., 'RentalAgreement', 'PropertyDeed').\nUse standard {output_type} Schema draft-07/draft-2019-09 conventions: include 'title'and 'type'.\nFor each property, provide an appropriate 'type' (string, integer, number, boolean, object, array).\nWhen a field can repeat (e.g., multiple tenants, witnesses), model it as an 'array' with an 'items' schema.\nMark fields as 'required' when they are explicitly present in the document.\nDo not invent values or add sample values\u2014only define the schema shape and constraints inferred from the text.\nIf a field's type is ambiguous, choose the most general appropriate type and note optional formats via 'format' or 'pattern'.\nReturn strictly valid {output_type} (no comments, no extra text and no revised version).\n\\n\\nDocument Text:\\n\\\"\\\"\\\"{context}\\\"\\\"\\\"",
-          "out_typ": "JSON",
-          "prompt_id": 15
         }
       }
     },
@@ -110,7 +149,7 @@
             "context"
           ],
           "sys_template": "You are an AI assistant that extracts structured data from {{doc_name}} documents.  \nYour task is to carefully analyze the provided text and return only a valid {{output_type}} object following the schema below.  \nEnsure all values are extracted exactly as they appear, normalized when necessary (e.g., numbers as integers, dates in DD/MM/YYYY).  \nIf a field is missing in the text, set it to null.\n\t\nEXTRACTION GUIDELINES:\n1. Extract only information that is explicitly stated in the document\n2. Use null for missing required fields that cannot be found\n3. Follow the exact field names and data types specified in the schema\n4. For dates, use ISO format (YYYY-MM-DD) or DD-MM-YYYY or DD/MM/YY when possible\n5. For currency amounts, include the numeric value with appropriate currency symbol\n6. Be precise and accurate - double-check all extracted values\n\nIMPORTANT: Return only valid {{output_type}} that matches the schema structure. Do not include any explanatory text.",
-          "usr_template": "Extract the following fields from the {{doc_name}} text:\n\nEXTRACTION SCHEMA ({{output_type}} format expected):\n```{{output_type}}\n{{\n  \"title\": \"Invoice\",\n  \"type\": \"object\",\n  \"properties\": {{\n    \"invoiceNumber\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"accountNumber\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"salesAreaCode\": {{\n      \"type\": \"string\",\n      \"required\": true\n    }},\n    \"invoiceDate\": {{\n      \"type\": \"string\",\n      \"format\": \"date\",\n      \"required\": true\n    }},\n    \"numberOfPages\": {{\n      \"type\": \"integer\",\n      \"required\": true\n    }},\n    \"dhlExpress\": {{\n      \"type\": \"object\",\n      \"properties\": {{\n        \"invoiceNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"accountNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"salesAreaCode\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"invoiceDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"numberOfPages\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"typeOfService\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"totalWeight\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"totalNumberOfItems\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"standardShippingCharge\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"totalExtraCharges\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"analysisOfExtraCharges\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"total\": {{\n              \"type\": \"number\",\n              \"required\": true\n            }}\n          }},\n          \"required\": [\n            \"total\"\n          ]\n        }},\n        \"paymentDueDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"totalAmount\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"paymentInstructions\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"pps\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"merchantCode\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"merchantCode\"\n              ]\n            }},\n            \"bankTransfer\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"accountName\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"bankCodeAndAccountNumbers\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"bankAddress\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"accountName\",\n                \"bankCodeAndAccountNumbers\",\n                \"bankAddress\"\n              ]\n            }},\n            \"byCheque\": {{\n              \"type\": \"object\",\n              \"properties\": {{\n                \"payableTo\": {{\n                  \"type\": \"string\",\n                  \"required\": true\n                }},\n                \"dueDate\": {{\n                  \"type\": \"string\",\n                  \"format\": \"date\",\n                  \"required\": true\n                }}\n              }},\n              \"required\": [\n                \"payableTo\",\n                \"dueDate\"\n              ]\n            }}\n          }},\n          \"required\": [\n            \"pps\",\n            \"bankTransfer\",\n            \"byCheque\"\n          ]\n        }}\n      }},\n      \"required\": [\n        \"invoiceNumber\",\n        \"accountNumber\",\n        \"salesAreaCode\",\n        \"invoiceDate\",\n        \"numberOfPages\",\n        \"typeOfService\",\n        \"totalWeight\",\n        \"totalNumberOfItems\",\n        \"standardShippingCharge\",\n        \"totalExtraCharges\",\n        \"analysisOfExtraCharges\",\n        \"paymentDueDate\",\n        \"totalAmount\",\n        \"paymentInstructions\"\n      ]\n    }},\n    \"airWaybill\": {{\n      \"type\": \"object\",\n      \"properties\": {{\n        \"airWaybillNumber\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"shippersReference\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"shipmentDate\": {{\n          \"type\": \"string\",\n          \"format\": \"date\",\n          \"required\": true\n        }},\n        \"originConsignor\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"destinationConsignee\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"typeOfService\": {{\n          \"type\": \"string\",\n          \"required\": true\n        }},\n        \"weightInKg\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"numberOfItems\": {{\n          \"type\": \"integer\",\n          \"required\": true\n        }},\n        \"standardCharge\": {{\n          \"type\": \"number\",\n          \"required\": true\n        }},\n        \"extraCharges\": {{\n          \"type\": \"object\",\n          \"properties\": {{\n            \"description\": {{\n              \"type\": \"string\",\n              \"required\": true\n            }},\n            \"amount\": {{\n              \"type\": \"number\",\n              \"required\": true\n            }}\n          }},\n          \"required\": [\n            \"description\",\n            \"amount\"\n          ]\n        }}\n      }},\n      \"required\": [\n        \"airWaybillNumber\",\n        \"shippersReference\",\n        \"shipmentDate\",\n        \"originConsignor\",\n        \"destinationConsignee\",\n        \"typeOfService\",\n        \"weightInKg\",\n        \"numberOfItems\",\n        \"standardCharge\",\n        \"extraCharges\"\n      ]\n    }}\n  }},\n  \"required\": [\n    \"invoiceNumber\",\n    \"accountNumber\",\n    \"salesAreaCode\",\n    \"invoiceDate\",\n    \"numberOfPages\",\n    \"dhlExpress\",\n    \"airWaybill\"\n  ]\n}}\n```\n\nDOCUMENT CONTENT TO ANALYZE:\n=====================================\n{context}\n=====================================\n\nTASK: Extract information from the document above and return it as {{output_type}} matching the schema.\n\nReturn valid {{output_type}} only:",
+          "usr_template": "Extract the following fields from the {{doc_name}} text:\n\nEXTRACTION SCHEMA ({{output_type}} format expected):\n```{{output_type}}\n{{\n    \"title\": \"Tracking Info\",\n    \"type\": \"object\",\n    \"properties\": {{\n        \"tracking_id\": {{\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n        }},\n        \"carrier\": {{\n            \"type\": \"string\",\n            \"enum\": [\n                \"FedEx\"\n            ]\n        }},\n        \"origin_city\": {{\n            \"type\": \"string\",\n            \"format\": \"uri\"\n        }},\n        \"destination_city\": {{\n            \"type\": \"string\",\n            \"format\": \"uri\"\n        }},\n        \"status\": {{\n            \"type\": \"string\",\n            \"enum\": [\n                \"in_transit\",\n                \"out_of_service\"\n            ]\n        }},\n        \"weight_kg\": {{\n            \"type\": \"integer\",\n            \"minimum\": 0,\n            \"maximum\": 10000\n        }},\n        \"shipping_cost\": {{\n            \"type\": \"number\",\n            \"minimum\": 0,\n            \"maximum\": 99999\n        }}\n    }},\n    \"required\": [\n        \"tracking_id\",\n        \"carrier\",\n        \"status\",\n        \"weight_kg\",\n        \"shipping_cost\"\n    ]\n}}\n```\n\nDOCUMENT CONTENT TO ANALYZE:\n=====================================\n{context}\n=====================================\n\nTASK: Extract information from the document above and return it as {{output_type}} matching the schema.\n\nReturn valid {{output_type}} only:",
           "out_typ": "",
           "prompt_id": 14
         }

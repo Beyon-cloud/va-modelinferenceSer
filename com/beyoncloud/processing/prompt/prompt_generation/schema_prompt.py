@@ -7,7 +7,10 @@ logger = logging.getLogger(__name__)
 class SchemaPrompt:
 
     def __init__(self):
-        
+        # Intentionally empty for now.
+        # Reason: This class does not require instance state at construction
+        # and will initialize attributes lazily when the analysis runs.
+        # If future attributes are needed, initialize them here.
         pass
 
 

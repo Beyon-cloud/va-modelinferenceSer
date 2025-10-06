@@ -103,6 +103,7 @@ class BaseGrpcServer:
             logger.warning(f"[{self.service_name}] Shutdown timeout exceeded. Forcing shutdown.")
         except asyncio.CancelledError:
             logger.info(f"[{self.service_name}] wait_closed task cancelled.")
+            raise
 
 
 class GrpcServerConfigLoader:

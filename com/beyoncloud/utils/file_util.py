@@ -80,9 +80,10 @@ class TextLoader:
             # Check if the file exists before attempting to open it
             if not os.path.exists(file_path):
                 raise FileNotFoundError(f"Error: The file '{file_path}' was not found.")
-            
+
             with open(file_path, "r", encoding='utf-8') as f:
                 text_data = f.read()
+
             return text_data
         except FileNotFoundError as e:
             logger.error(f"Error: The file '{file_path}' was not found.")
@@ -236,8 +237,6 @@ class FetchContent:
                 delimiter = Delimiter.CSV
 
             try:
-                #output_data = self._clean_json_response(input_data, delimiter)
-
                 if FileFormats.CSV == file_format:
                     output_data = self._clean_csv_response(input_data, delimiter)
                     data_obj = output_data
@@ -271,8 +270,8 @@ class FetchContent:
         
         # Remove any text before the first { and after the last }
         input_content = input_data.strip()
-        if Delimiter.JSON in input_content:
-            input_content = self._extract_structure_content_only(input_data.strip(), Delimiter.JSON)
+        if delimiter in input_content:
+            input_content = self._extract_structure_content_only(input_data.strip(), delimiter)
             
         print(f"input_content -----------> {input_content}")
 
@@ -292,8 +291,8 @@ class FetchContent:
         
         # Remove any text before the first { and after the last }
         input_content = input_data.strip()
-        if Delimiter.CSV in input_content:
-            input_content = self._extract_structure_content_only(input_data.strip(), Delimiter.JSON)
+        if delimiter in input_content:
+            input_content = self._extract_structure_content_only(input_data.strip(), delimiter)
             
         print(f"CSV input_content -----------> {input_content}")
 
@@ -324,21 +323,21 @@ class FetchContent:
         match = re.search(fr'{delimiter}(.*?){delimiter}', input_data, re.DOTALL)
         if match:
             return match.group(1)
-        return None
+        return CommonPatterns.EMPTY_SPACE
 
 
     def fetch_ocr_content(self, filepath: str) -> str:
 
         if not filepath:
-            logger.info(f"The given filepath is empty")
-            return None
+            logger.info("The given filepath is empty")
+            return CommonPatterns.EMPTY_SPACE
 
         json_loader = JsonLoader()
         json_data = json_loader.get_json_object(filepath)
 
         if not json_data:
             logger.info(f"The given file have empty data. Filepath is {filepath} ")
-            return None
+            return CommonPatterns.EMPTY_SPACE
 
         full_text = "".join(page.get("text", "") for page in json_data.get("results", []))
         

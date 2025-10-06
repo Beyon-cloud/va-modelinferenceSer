@@ -7,6 +7,10 @@ from com.beyoncloud.processing.prompt.prompt_router import DynamicPromptRouter, 
 class PromptGenerator:
 
     def __init__(self):
+        # Intentionally empty for now.
+        # Reason: This class does not require instance state at construction
+        # and will initialize attributes lazily when the analysis runs.
+        # If future attributes are needed, initialize them here.
         pass
 
     def prompt_generator(self, query: str, domain_id: str, searchResults: List[Document], chat_history: List[ChatHistory] = None):
@@ -21,7 +25,6 @@ class PromptGenerator:
         # Combine context from search results
         fullContext =""
         if searchResults:
-            #fullContext = "\n".join([result['chunk'] for result in searchResults])
             fullContext = '"'
             for i, result in enumerate(searchResults, start=1):
                 fullContext += f'{result['chunk']}\\n'
@@ -47,25 +50,25 @@ class PromptGenerator:
         print(f"\n🎯 SELECTED PROMPT TYPE: {result['selected_prompt_type'].value.upper()}")
         print(f"🏆 ROUTING CONFIDENCE: {result['routing_confidence']:.3f}")
         
-        print(f"\n📝 GENERATED PROMPT:")
+        print("\n📝 GENERATED PROMPT:")
         print("-" * 40)
         print(result["generated_prompt"])
         
-        print(f"\n🧠 MODEL PREDICTIONS:")
+        print("\n🧠 MODEL PREDICTIONS:")
         for model_name, prediction in result['model_predictions'].items():
             print(f"   • {model_name}: {prediction.model_name} - {prediction.confidence:.3f}")
         
-        print(f"\n💡 ROUTING REASONING:")
+        print("\n💡 ROUTING REASONING:")
         print(result['routing_reasoning'])
         
         if result.get('alternative_prompts'):
-            print(f"\n🔄 ALTERNATIVE PROMPT TYPES:")
+            print("\n🔄 ALTERNATIVE PROMPT TYPES:")
             for alt_type in result['alternative_prompts'].keys():
                 print(f"   • {alt_type.upper()}")
         
         print("\n" + "="*80)
 
-        run_performance_analysis(router)
+        run_performance_analysis()
     
         # Save trained models
         try:

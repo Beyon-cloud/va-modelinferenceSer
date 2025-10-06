@@ -1,7 +1,7 @@
 from datetime import datetime
 import com.beyoncloud.config.settings.env_config as config
 
-def getCurrentDateString() -> str:
+def get_current_date_string() -> str:
     currDate = datetime.now().strftime(config.COMMON_CONFIG.dateformat)
     return currDate
 

@@ -13,9 +13,7 @@ class TableSettings:
     """
  
     def __init__(self):
-        logger.info(f"Table mapping initilizing...")
-        #self._config = YamlConfigLoader(CONFIG_PATH).load_yaml_config()
-        #self.schemas = self._config.get("schemas", {})
+        logger.info("Table mapping initilizing...")
         self.schemas = config.TABLE_MAPPER.get("schemas", {})
  
     def get_table_config(self, schema_name: str, table_name: str) -> dict:
@@ -46,6 +44,3 @@ class TableSettings:
 def load_table_mapping() -> TableSettings:
     """Cached singleton instance."""
     return TableSettings()
-
-#table_settings = get_table_config()
-#print("Table Name:", table_settings.get_db_column_name("schema1", "DATA_SRC","last_updated_at"))

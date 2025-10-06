@@ -49,9 +49,7 @@ class SchemaPromptService:
             db_service (DataBaseService, optional): Dependency-injected DB service.
                                                    If None, a new instance is created.
         """
-        print(db_service)
         self.db_service = db_service or DataBaseService()
-        print(self.db_service)
 
     async def generate_schema_prompt(self, schema_prompt_request: SchemaPromptRequest) -> SchemaPromptResponse:
 
@@ -164,7 +162,7 @@ class SchemaPromptService:
             generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
 
         # Step 5: Save date in DB
-        print(f"Before save log table")
+        print("Before save log table")
         print(self.db_service)
 
         oth_val = {
@@ -224,9 +222,6 @@ class SchemaPromptService:
 
         # Step 4: Get schema object
         custom_requirements: Optional[Dict[str, Any]] = None
-        #schema = enhanced_document_processor.generate_schema(document_type, custom_requirements)
-        #schema = DocumentSchema()
-
         print("before builder.........")
         # Build the entity request using the builder pattern, ensuring the builder returns expected shape.
         structure_input_data = (

@@ -180,13 +180,13 @@ class ComprehensiveAnalysis:
         
         logger.info(f"📋 Context Requirements: {', '.join(analysis.context_requirements)}")
         
-        logger.info(f"🎨 Suggested Prompt Types:")
+        logger.info("🎨 Suggested Prompt Types:")
         for i, prompt_type in enumerate(analysis.suggested_prompt_types[:3], 1):
             logger.info(f"   {i}. {prompt_type.value.upper()}")
         
         logger.info(f"🏆 Overall Confidence: {analysis.confidence_scores['overall']:.3f}")
         
-        logger.info(f"🔬 Model Predictions Summary:")
+        logger.info("🔬 Model Predictions Summary:")
         for model_name, prediction in analysis.model_predictions.items():
             logger.info(f"   • {model_name}: {prediction.confidence:.3f} confidence")
         

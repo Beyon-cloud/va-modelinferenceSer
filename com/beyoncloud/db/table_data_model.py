@@ -2,11 +2,11 @@ from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 
 class DynSelectEntity(BaseModel):
-    column_names: List[str] = None
+    column_names: Optional[List[str]] = None
     conditions: Dict[str, Any] = None
     table_name: str = ""
     top_k: Optional[int] = None
-    order_by: Dict[str, List[str]] = None
+    order_by: Optional[Dict[str, List[str]]] = None
 
 class SentenceEmbeddingsEntity(BaseModel):
     doc_id: str

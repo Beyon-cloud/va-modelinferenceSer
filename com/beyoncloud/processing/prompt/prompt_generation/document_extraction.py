@@ -3,7 +3,7 @@
 # Main Document Extraction System
 class DocumentExtractionSystem:
     """High-level system for document extraction using Hugging Face Llama3"""
-    # model_name="meta-llama/Meta-Llama-3-8B-Instruct:novita"
+
     def __init__(
         self, 
         hf_api_key: str,
