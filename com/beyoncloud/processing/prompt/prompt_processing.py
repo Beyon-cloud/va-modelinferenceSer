@@ -13,30 +13,30 @@ class PromptGenerator:
         # If future attributes are needed, initialize them here.
         pass
 
-    def prompt_generator(self, query: str, domain_id: str, searchResults: List[Document], chat_history: List[ChatHistory] = None):
+    def prompt_generator(self, query: str, domain_id: str, search_results: List[Document], chat_history: List[ChatHistory] = None):
         
         # Build chat history string (if available)
-        historyPrompt = []
+        history_prompt = []
         if chat_history:
             for chat in chat_history[-5:]:
-                historyPrompt.append((chat.query, chat.response))
+                history_prompt.append((chat.query, chat.response))
 
 
         # Combine context from search results
-        fullContext =""
-        if searchResults:
-            fullContext = '"'
-            for i, result in enumerate(searchResults, start=1):
-                fullContext += f'{result['chunk']}\\n'
-            fullContext = fullContext.rstrip('\\n') + '"'
+        full_context =""
+        if search_results:
+            full_context = '"'
+            for i, result in enumerate(search_results, start=1):
+                full_context += f'{result['chunk']}\\n'
+            full_context = full_context.rstrip('\\n') + '"'
 
-        result = self._prompt_router(query, fullContext, domain_id, historyPrompt)
+        result = self._prompt_router(query, full_context, domain_id, history_prompt)
 
         generated_prompt = result.get("generated_prompt")
         print(f" prompt_generator --> generated_prompt --> {generated_prompt}")
         return generated_prompt
 
-    def _prompt_router(self, query: str, text: str= "", domain_id: str="", historyPrompt: List=[]) -> Dict[str,Any] :
+    def _prompt_router(self, query: str, text: str= "", domain_id: str="", history_prompt: List=[]) -> Dict[str,Any] :
         """Comprehensive demonstration of the model-based system"""
         print("🧠 COMPLETE MODEL-BASED DYNAMIC PROMPT SYSTEM")
         print("=" * 80)
@@ -45,7 +45,7 @@ class PromptGenerator:
         router = DynamicPromptRouter()
     
         # Generate optimal prompt using complete model ensemble
-        result = router.generate_optimal_prompt(query, text, domain_id, historyPrompt)
+        result = router.generate_optimal_prompt(query, text, domain_id, history_prompt)
         
         print(f"\n🎯 SELECTED PROMPT TYPE: {result['selected_prompt_type'].value.upper()}")
         print(f"🏆 ROUTING CONFIDENCE: {result['routing_confidence']:.3f}")

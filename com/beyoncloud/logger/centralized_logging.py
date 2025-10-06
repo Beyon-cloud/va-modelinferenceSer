@@ -438,7 +438,8 @@ class CentralizedLoggingManager(ILoggingManager):
     def set_environment_overrides(self) -> None:
         """Apply environment variable overrides"""
         log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
-        log_format = os.getenv('LOG_FORMAT', 'json')
+        # Below Changes done by ramana for future usecase, Commenting now due to Sonar issue
+        #log_format = os.getenv('LOG_FORMAT', 'json')
         environment = os.getenv('ENVIRONMENT', 'development')
         
         # Update root logger level

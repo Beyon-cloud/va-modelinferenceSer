@@ -50,9 +50,9 @@ class DataBaseService:
         """Get automapped model class by logical table name."""
         try:
             table_name = mapper.get_db_table_name(schema, table_key).lower()
-            return getattr(pg_conn.Base.classes, table_name)
+            return getattr(pg_conn.base.classes, table_name)
         except (KeyError, AttributeError):
-            available = list(pg_conn.Base.classes.keys())
+            available = list(pg_conn.base.classes.keys())
             raise RuntimeError(
                 f"Automap could not find class for table '{table_key}' "
                 f"(mapped to '{table_name}'). Available: {available}"

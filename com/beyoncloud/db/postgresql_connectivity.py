@@ -39,7 +39,7 @@ class PostgreSqlConnectivity:
                 logger.info("PostgreSQL connection pool created successfully.")
 
                 # Init SQLAlchemy async engine and sessionmaker
-                self.Base = automap_base()
+                self.base = automap_base()
                 self.metadata = MetaData()
                 sqlalchemy_uri = self.postgres_uri.replace("postgresql://", "postgresql+asyncpg://")
                 self.engine = create_async_engine(
@@ -72,7 +72,7 @@ class PostgreSqlConnectivity:
 
             # Automap inside a run_sync block
             def do_prepare(sync_conn):
-                self.Base.prepare(sync_conn, reflect=True)
+                self.base.prepare(sync_conn, reflect=True)
 
             await conn.run_sync(do_prepare)
 

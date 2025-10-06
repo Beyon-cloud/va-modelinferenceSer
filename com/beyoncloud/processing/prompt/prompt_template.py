@@ -27,13 +27,13 @@ class SafeDict(dict):
 
 async def generate_prompt_template_json():
     # Fetch records and build JSON structure
-    postgresSqlImpl = PostgresSqlImpl()
-    lstPromptRecord = await postgresSqlImpl.query_select("prompt_query")
+    postgres_sql_impl = PostgresSqlImpl()
+    lst_prompt_record = await postgres_sql_impl.query_select("prompt_query")
 
     # Hierarchy: org_id → prompt_typ → domain → task_id → TaskDetail
     final_output: Dict[str, Dict[str, Dict[str, Dict[str, TaskDetail]]]] = {}
 
-    for row in lstPromptRecord:
+    for row in lst_prompt_record:
         prompt_id = row["prompt_id"]
         org_id = row["org_id"] or ""
         prompt_typ = row["prompt_typ"] or ""
@@ -71,7 +71,7 @@ async def generate_prompt_template_json():
         )
 
     # Convert Pydantic objects to JSON
-    jsonOutput = json.dumps(
+    json_output = json.dumps(
         {
             org: {
                 ptyp: {
@@ -85,28 +85,28 @@ async def generate_prompt_template_json():
         indent=2,
     )
 
-    print(jsonOutput)
+    print(json_output)
 
     # Save to json file
     os.makedirs(config.PROMPT_FOLDER_PATH, exist_ok=True)
-    promptFilepath = os.path.join(config.PROMPT_FOLDER_PATH, config.PROMPT_FILENAME)
+    prompt_filepath = os.path.join(config.PROMPT_FOLDER_PATH, config.PROMPT_FILENAME)
     
     def write_sync(path, content):
         with open(path, "w") as f:
             f.write(content)
 
-    await asyncio.get_event_loop().run_in_executor(None, write_sync, promptFilepath, jsonOutput)
+    await asyncio.get_event_loop().run_in_executor(None, write_sync, prompt_filepath, json_output)
 
-    return promptFilepath
+    return prompt_filepath
 
-def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str, out_typ: str = None ) -> Dict[str, Any]:
+def get_prompt_template(domain_id: str, task: str, org_id: int, prompt_typ: str, out_typ: str = None ) -> Dict[str, Any]:
 
     json_loader = JsonLoader()
     prompt_file_path = os.path.join(config.PROMPT_FOLDER_PATH, config.PROMPT_FILENAME)
     print(f"prompt_file_path --> {prompt_file_path}")
     prompt_data = json_loader.get_json_object(prompt_file_path)
-    print(f"promptInputVariables --> {org_id} - {prompt_typ} - {domainCatg} - {task}")
-    prompt_base_json = prompt_data.get(str(org_id), {}).get(prompt_typ, {}).get(domainCatg, {}).get(task, {})
+    print(f"promptInputVariables --> {org_id} - {prompt_typ} - {domain_id} - {task}")
+    prompt_base_json = prompt_data.get(str(org_id), {}).get(prompt_typ, {}).get(domain_id, {}).get(task, {})
     if not prompt_base_json:
         prompt_base_json = prompt_data.get(str(org_id), {}).get(prompt_typ, {}).get(CommonPatterns.ASTRICK, {}).get(CommonPatterns.ASTRICK, {})
     
@@ -146,19 +146,19 @@ def get_prompt_template(domainCatg: str, task: str, org_id: int, prompt_typ: str
         user_prompt_template = user_prompt_template.replace("\\n", "\n")
 
     if system_prompt_template and user_prompt_template:
-        customPrompt = ChatPromptTemplate.from_messages([
+        custom_prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(system_prompt_template),
             HumanMessagePromptTemplate.from_template(user_prompt_template)
         ])
     else:
-        customPrompt = PromptTemplate(
+        custom_prompt = PromptTemplate(
             template=prompt_template,
             input_variables=prompt_input_variables
         )
 
     propmpt_output = {
         "prompt_id": prompt_id,
-        "prompt": customPrompt,
+        "prompt": custom_prompt,
         "input_variables": prompt_input_variables,
         "system_prompt_template": system_prompt_template,
         "user_prompt_template": user_prompt_template,
@@ -192,13 +192,13 @@ def get_temp_prompt_template(sys_prompt_tpl: str, usr_prompt_tpl: str, input_var
         input_vars_list = [v.strip() for v in input_variables.split(",")]
 
     if system_prompt_template and user_prompt_template:
-        customPrompt = ChatPromptTemplate.from_messages([
+        custom_prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(system_prompt_template),
             HumanMessagePromptTemplate.from_template(user_prompt_template)
         ])
 
     propmpt_output = {
-        "prompt": customPrompt,
+        "prompt": custom_prompt,
         "system_prompt_template": system_prompt_template,
         "user_prompt_template": user_prompt_template,
         "input_variables": input_vars_list
@@ -212,15 +212,15 @@ async def get_prompt_param(prompt_id: int):
     param_result = await db_service.select_prompt_param(prompt_id)
     return param_result
 
-def get_prompt_input_variables(domainCatg: str, task: str) -> List[str]:
+def get_prompt_input_variables(domain_id: str, task: str) -> List[str]:
     
     json_loader = JsonLoader()
     prompt_file_path = os.path.join(config.PROMPT_FOLDER_PATH, config.PROMPT_FILENAME)
     prompt_data = json_loader.get_json_object(prompt_file_path)
-    promptInputVariables = prompt_data.get(domainCatg, {}).get(task, {}).get("input_variables")
-    if not promptInputVariables:
-        promptInputVariables = prompt_data.get("general", {}).get("instruction", {}).get("input_variables")
-    return promptInputVariables
+    prompt_input_variables = prompt_data.get(domain_id, {}).get(task, {}).get("input_variables")
+    if not prompt_input_variables:
+        prompt_input_variables = prompt_data.get("general", {}).get("instruction", {}).get("input_variables")
+    return prompt_input_variables
 
 def build_prompt(context: str, query: str, is_instruct: bool, tokenizer=None) -> str:
     if is_instruct and tokenizer:

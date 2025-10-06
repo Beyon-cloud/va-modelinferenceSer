@@ -36,7 +36,7 @@ class RagProcessImpl:
         """
         self.table_settings = TableSettings()
 
-    async def generateRAGResponse(self, ragReqDataModel: RagReqDataModel, search_result: list[dict[str, Any]] = []):
+    async def generateRAGResponse(self, rag_req_datamodel: RagReqDataModel, search_result: list[dict[str, Any]] = []):
         """
         Executes the basic RAG flow using a semantic search and a query string.
 
@@ -49,12 +49,12 @@ class RagProcessImpl:
 
         starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         start_time = time.time()
-        query = self.get_query(ragReqDataModel)
-        orgId = self.getOrgId(ragReqDataModel)
+        query = self.get_query(rag_req_datamodel)
+        orgId = self.getOrgId(rag_req_datamodel)
 
-        ragGeneratorProcess = RagGeneratorProcess()
-        chatHistory = self.get_chat_history(ragReqDataModel)
-        response = await ragGeneratorProcess.generate_answer(ragReqDataModel,query, search_result, chatHistory)
+        rag_generator_process = RagGeneratorProcess()
+        chat_history = self.get_chat_history(rag_req_datamodel)
+        response = await rag_generator_process.generate_answer(rag_req_datamodel,query, search_result, chat_history)
         endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
@@ -62,7 +62,7 @@ class RagProcessImpl:
         #print(response)
         try:
             metadata = {
-                "domain": ragReqDataModel.domain_id,
+                "domain": rag_req_datamodel.domain_id,
                 "starttime": starttime,
                 "start_time": start_time,
                 "endtime": endtime,
@@ -93,26 +93,26 @@ class RagProcessImpl:
                 time_elapsed = elapsed,
                 metadata = metadata
             )
-            await self.saveRagResponse(rag_log_qry_model)
+            await self.save_rag_response(rag_log_qry_model)
         except Exception as e:
             logger.error(f"Error processing RAG query log save : {e}")
 
-        ragRespDataModel = self.getRagRespDataModel(ragReqDataModel, response)
-        return ragRespDataModel
+        rag_resp_datamodel = self.getRagRespDataModel(rag_req_datamodel, response)
+        return rag_resp_datamodel
 
-    def get_query(self, ragReqDataModel: RagReqDataModel):
+    def get_query(self, rag_req_datamodel: RagReqDataModel):
         """
         Extracts the latest user query from the RAG request model.
 
         Args:
-            ragReqDataModel (RagReqDataModel): The RAG input object containing user inputs.
+            rag_req_datamodel (RagReqDataModel): The RAG input object containing user inputs.
 
         Returns:
             str: The first available textual query from the input.
         """
 
         query = ""
-        userInputs = ragReqDataModel.user_input
+        userInputs = rag_req_datamodel.user_input
         print(userInputs)
         if userInputs:
             queryLst = [ui.content for ui in userInputs if (ui.type == "text" or ui.type == "audio") and ui.content]
@@ -120,46 +120,46 @@ class RagProcessImpl:
 
         return query
 
-    def getOrgId(self, ragReqDataModel: RagReqDataModel) -> int:
+    def getOrgId(self, rag_req_datamodel: RagReqDataModel) -> int:
         """
         Extracts the organization ID from the RAG request.
 
         Args:
-            ragReqDataModel (RagReqDataModel): The RAG input object containing metadata.
+            rag_req_datamodel (RagReqDataModel): The RAG input object containing metadata.
 
         Returns:
             int: The organization ID.
         """
 
-        orgId = ragReqDataModel.org_id
+        orgId = rag_req_datamodel.org_id
         return orgId
 
-    def get_chat_history(self, ragReqDataModel: RagReqDataModel) -> List[Dict[str, str]]:
+    def get_chat_history(self, rag_req_datamodel: RagReqDataModel) -> List[Dict[str, str]]:
         """
         Constructs the chat history as a list of query-response pairs for use in the prompt.
 
         Args:
-            ragReqDataModel (RagReqDataModel): The RAG input containing past dialog history.
+            rag_req_datamodel (RagReqDataModel): The RAG input containing past dialog history.
 
         Returns:
             List[ChatHistory]: List of ChatHistory objects representing prior exchanges.
         """
 
-        dialogDetails = ragReqDataModel.context.dialogDetails
-        chatHistory: List[ChatHistory] = []
-        for dialog in dialogDetails:
-            userInputs: List[UserInput] = dialog.user_input
-            if userInputs:
-                queryLst = [ui.content for ui in userInputs if ui.type == "text" and ui.content]
-                queryStr = queryLst[0]
+        dialog_details = rag_req_datamodel.context.dialogDetails
+        chat_history: List[ChatHistory] = []
+        for dialog in dialog_details:
+            user_inputs: List[UserInput] = dialog.user_input
+            if user_inputs:
+                query_lst = [ui.content for ui in user_inputs if ui.type == "text" and ui.content]
+                query_str = query_lst[0]
 
-            chatHistory.append(
-                ChatHistory(query= queryStr, response= dialog.response.text)
+            chat_history.append(
+                ChatHistory(query= query_str, response= dialog.response.text)
             )
-        print(chatHistory)
-        return chatHistory
+        print(chat_history)
+        return chat_history
 
-    def getInfRespDataModel(self, response: str) -> ResponseData:
+    def get_inf_resp_datamodel(self, response: str) -> ResponseData:
         """
         Constructs the response data model from the RAG response.
 
@@ -171,11 +171,11 @@ class RagProcessImpl:
             RagRespDataModel: Response data model for the requested 'RagReqDataModel' input.
         """
 
-        responseData = ResponseData(
+        response_data = ResponseData(
             text = response
         )
 
-        return responseData
+        return response_data
 
     async def generate_structured_response(self, structure_input_data: StructureInputData) -> str:
         """
@@ -191,12 +191,10 @@ class RagProcessImpl:
         starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         start_time = time.time()
         rag_generator_process = RagGeneratorProcess()
-        print(f"impl_start : {config.ENABLE_HF_INFRENCE_YN}")
+
         if config.ENABLE_HF_INFRENCE_YN == "Y":
-            print("impl_if")
             response = await rag_generator_process.hf_response(structure_input_data)
         else:
-            print("impl_else")
             response = await rag_generator_process.generate_structured_response(structure_input_data)
 
         
@@ -227,7 +225,7 @@ class RagProcessImpl:
                 time_elapsed = elapsed,
                 metadata = metadata
             )
-            await self.saveRagResponse(rag_log_qry_model)
+            await self.save_rag_response(rag_log_qry_model)
 
         except Exception as e:
             logger.error(f"Error processing RAG query log save : {e}")
@@ -253,7 +251,7 @@ class RagProcessImpl:
 
         return response_model
 
-    async def saveRagResponse(
+    async def save_rag_response(
         self, 
         rag_log_qry_model = RagLogQryModel
     ):
@@ -276,7 +274,7 @@ class RagProcessImpl:
             self.table_settings.get_db_column_name("schema1", "RagQryLogs", "metadata"): rag_log_qry_model.metadata,
 
         }
-        RagQryLogs = pg_conn.Base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
+        RagQryLogs = pg_conn.base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
         qry_log = RagQryLogs(**column_data)
         pg = PostgresSqlImpl()
         await pg.sqlalchemy_insert_one(qry_log, return_field = None)

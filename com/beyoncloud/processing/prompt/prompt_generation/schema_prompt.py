@@ -17,7 +17,6 @@ class SchemaPrompt:
     async def generate_schema_prompt(self, schema_prompt_request: SchemaPromptRequest):
 
         file_path = schema_prompt_request.source_path
-        output_format = schema_prompt_request.desired_output_format
         document_type = schema_prompt_request.document_type
         enhanced_document_processor = EnhancedDocumentProcessor()
         results = await enhanced_document_processor.extract_from_document(file_path,document_type, None, None)

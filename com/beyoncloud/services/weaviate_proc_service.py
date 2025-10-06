@@ -36,7 +36,7 @@ def search_text(search_base: SearchBase):
     return result
 
 
-async def save_file(file_base: FileBase):
+def save_file(file_base: FileBase):
     path = Path(file_base.file_path)
     if not path.exists():
         raise FileNotFoundError(f"{file_base.file_path} not found")
@@ -46,7 +46,7 @@ async def save_file(file_base: FileBase):
     weaviate_client.close()
     return result
 
-async def search_by_file(search_base: SearchBase):
+def search_by_file(search_base: SearchBase):
     weaviate_client = WeaviateClient()
     response = weaviate_client.search_by_file1(search_base.query, config.MODEL_CONFIG.get("query_retrieval_top_k"))
     return response

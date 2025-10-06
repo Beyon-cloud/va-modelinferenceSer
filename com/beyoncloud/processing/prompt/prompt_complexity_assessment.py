@@ -32,7 +32,7 @@ class ComplexityAssessmentModel:
     """ML model for query complexity assessment"""
     
     def __init__(self):
-        self.model = GradientBoostingClassifier(n_estimators=100, random_state=42)
+        self.model = GradientBoostingClassifier(n_estimators=100,learning_rate=0.1, random_state=42)
         self.feature_extractor = TfidfVectorizer(max_features=1000, ngram_range=(1, 3))
         self.label_encoder = LabelEncoder()
         self.is_trained = False
@@ -68,7 +68,7 @@ class ComplexityAssessmentModel:
         tfidf_features = self.feature_extractor.fit_transform(queries).toarray()
         
         # Combine features
-        all_features = np.hstack([feature_df.values, tfidf_features])
+        all_features = np.hstack([feature_df.to_numpy(), tfidf_features])
         
         # Encode labels
         complexity_values = [c.value for c in complexities]

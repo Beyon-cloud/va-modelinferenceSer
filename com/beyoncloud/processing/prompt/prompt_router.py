@@ -33,7 +33,7 @@ class DynamicPromptRouter:
         self.complexity_model = ComplexityAssessmentModel()
         self.domain_model = DomainClassificationModel()
         self.intent_classification = IntentClassification()
-        self.Pattern_recognition = PatternRecognition()
+        self.pattern_recognition = PatternRecognition()
         self.feature_importance_analysis = FeatureImportanceAnalysis()
         self.context_requirements_analysis = ContextRequirementsAnalysis()
         self.comprehensive_analysis = ComprehensiveAnalysis()
@@ -438,7 +438,7 @@ class DynamicPromptRouter:
                 prompt_scores[prompt_type] += 2.5
         
         # Entity-based scoring
-        entity_types = list(set([e['label'] for e in entities]))
+        entity_types = {e['label'] for e in entities}
         for entity_type in entity_types:
             entity_prompts = self.prompt_type_mapping.get(entity_type, [])
             for prompt in entity_prompts:
@@ -564,7 +564,7 @@ class DynamicPromptRouter:
         query: str, 
         text: str, 
         domain_id: str = "",
-        historyPrompt: List=[]
+        history_prompt: List=[]
     ) -> Dict[str, Any]:
         """Generate optimal prompt using complete model ensemble"""
         
@@ -579,7 +579,7 @@ class DynamicPromptRouter:
         
         print(f" best_prompt_type ---> {best_prompt_type} ")
         # Generate the actual prompt
-        generated_prompt = self._generate_dynamic_prompt(query, domain_id, best_prompt_type, text, historyPrompt, analysis)
+        generated_prompt = self._generate_dynamic_prompt(query, domain_id, best_prompt_type, text, history_prompt, analysis)
         
         # Calculate routing confidence
         routing_confidence = analysis.confidence_scores['overall']
@@ -596,7 +596,7 @@ class DynamicPromptRouter:
             'routing_reasoning': routing_reasoning,
             'model_predictions': analysis.model_predictions,
             'feature_importance': analysis.feature_importance,
-            'alternative_prompts': self._generate_alternative_prompts(query, domain_id, analysis.suggested_prompt_types[1:3], text, historyPrompt, analysis)
+            'alternative_prompts': self._generate_alternative_prompts(query, domain_id, analysis.suggested_prompt_types[1:3], text, history_prompt, analysis)
         }
         
         logger.info(f"✅ OPTIMAL PROMPT GENERATED: {best_prompt_type.value.upper()}")
@@ -610,28 +610,23 @@ class DynamicPromptRouter:
         domain_id: str,
         prompt_type: PromptType, 
         text: str, 
-        historyPrompt: List,
+        history_prompt: List,
         analysis: QueryAnalysis
     ) -> str:
         """Generate dynamic prompt based on analysis"""
         
         # Extract key information
-        entity_types = list(set([e['label'] for e in analysis.entities_detected]))
-        entity_str = ", ".join(entity_types) if entity_types else "entities"
-        domain_context = f" in the {analysis.domain} domain" if analysis.domain != "general" else ""
-        complexity_level = analysis.complexity.name.lower()
-
         print(f"domain_id --> {domain_id} ; prompt_type.value --> {prompt_type.value}")
         prompt_template = get_prompt_template(domain_id, prompt_type.value)
-        promptInputVariables = get_prompt_input_variables(domain_id, prompt_type.value)
+        prompt_input_variables = get_prompt_input_variables(domain_id, prompt_type.value)
 
         variable_map = {
             "query": query,
             "context": text,
-            "chat_history": historyPrompt
+            "chat_history": history_prompt
         }
         # Dynamically build the inputs dictionary
-        inputs = {var: variable_map[var] for var in promptInputVariables}
+        inputs = {var: variable_map[var] for var in prompt_input_variables}
         print("Inputs : ",inputs)
         print(f"customPrompt - {prompt_template}")
 
@@ -763,9 +758,9 @@ Example 2: "The meeting is scheduled for January 15, 2024."
     
     def _generate_dynamic_schema(self, entity_str: str, analysis: QueryAnalysis) -> str:
         """Generate dynamic JSON schema based on analysis"""
-        entity_types = list(set([e['label'] for e in analysis.entities_detected]))
+        entity_types = {e['label'] for e in analysis.entities_detected}
         if not entity_types:
-            entity_types = ["PERSON", "ORGANIZATION", "LOCATION", "DATE", "MONEY"]
+            entity_types = {"PERSON", "ORGANIZATION", "LOCATION", "DATE", "MONEY"}
         
         schema = {
             "type": "object",
@@ -818,7 +813,7 @@ Example 2: "The meeting is scheduled for January 15, 2024."
             context_parts.append(f"Detected Patterns: {patterns_str}")
         
         if analysis.entities_detected:
-            entity_types = list(set([e['label'] for e in analysis.entities_detected]))
+            entity_types = {e['label'] for e in analysis.entities_detected}
             context_parts.append(f"Expected Entity Types: {', '.join(entity_types)}")
         
         if analysis.context_requirements:
@@ -842,7 +837,7 @@ Example 2: "The meeting is scheduled for January 15, 2024."
         # Entity reasoning
         if analysis.entities_detected:
             entity_count = len(analysis.entities_detected)
-            entity_types = len(set([e['label'] for e in analysis.entities_detected]))
+            entity_types = {e['label'] for e in analysis.entities_detected}
             reasoning_parts.append(f"Entity Detection: Found {entity_count} entities across {entity_types} different types using BERT-NER and rule-based pattern recognition.")
         
         # Pattern reasoning
@@ -870,7 +865,7 @@ Example 2: "The meeting is scheduled for January 15, 2024."
         domain_id: str, 
         alternative_types: List[PromptType], 
         text: str, 
-        historyPrompt: List,
+        history_prompt: List,
         analysis: QueryAnalysis) -> Dict[str, str]:
 
         """Generate alternative prompt options"""
@@ -878,7 +873,7 @@ Example 2: "The meeting is scheduled for January 15, 2024."
         
         for prompt_type in alternative_types:
             if prompt_type:
-                alternatives[prompt_type.value] = self._generate_dynamic_prompt(query, domain_id, prompt_type, text, historyPrompt, analysis)
+                alternatives[prompt_type.value] = self._generate_dynamic_prompt(query, domain_id, prompt_type, text, history_prompt, analysis)
         
         return alternatives
     

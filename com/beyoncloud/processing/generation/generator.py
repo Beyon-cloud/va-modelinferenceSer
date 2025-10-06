@@ -79,7 +79,7 @@ class RagGeneratorProcess:
         llm = all_model_objects.get_hf_llama_model_pipeline()
 
         if llm is None:
-            raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
+            raise ValueError("generate_answer - LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
         query = self.get_query(rag_req_data_model)
         logger.info(f"Inpur query --> {query}")
@@ -103,8 +103,8 @@ class RagGeneratorProcess:
 
         response = await llm.ainvoke(final_prompt)
 
-        print("\n Response:\n", response)
-        logger.info(f"Response --> {response}")
+        print("\n Chat response:\n", response)
+        logger.info(f"Chat response: --> {response}")
 
         return response
 
@@ -170,7 +170,7 @@ class RagGeneratorProcess:
 
      
         print("\n Hugging face Response:\n", response)
-        logger.info(f"Response --> {response}")
+        logger.info(f"Hugging face Response: --> {response}")
 
         return response
 
@@ -184,7 +184,7 @@ class RagGeneratorProcess:
         llm = all_model_objects.get_hf_llama_model_pipeline()
 
         if llm is None:
-            raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
+            raise ValueError("generate_structured_response - LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
 
         # Combine context from search results
@@ -224,8 +224,8 @@ class RagGeneratorProcess:
             inputs
         )
 
-        print("\n Response:\n", response)
-        logger.info(f"Response --> {response}")
+        print("\n Structured response:\n", response)
+        logger.info(f"Structured response --> {response}")
 
         return response
 
@@ -243,7 +243,7 @@ class RagGeneratorProcess:
         llm = all_model_objects.get_hf_llama_model_pipeline()
 
         if llm is None:
-            raise ValueError("LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
+            raise ValueError("temp_generate_structured_response - LLM model not loaded. Please check ModelRegistry.hf_llama_model_pipeline")
 
 
         # Combine context from search results
@@ -332,8 +332,8 @@ class RagGeneratorProcess:
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         
-        print("\n Hugging face Response:\n", response)
-        logger.info(f"Response --> {response}")
+        print("\n Temp hugging face response:\n", response)
+        logger.info(f"Temp hugging face response: --> {response}")
 
         # Save response data into query log table
         try:
@@ -385,7 +385,7 @@ class RagGeneratorProcess:
             self.table_settings.get_db_column_name("schema1", "RagQryLogs", "metadata"): rag_log_qry_model.metadata,
 
         }
-        rag_qry_logs = pg_conn.Base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
+        rag_qry_logs = pg_conn.base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
         qry_log = rag_qry_logs(**column_data)
         pg = PostgresSqlImpl()
         await pg.sqlalchemy_insert_one(qry_log, return_field = None)

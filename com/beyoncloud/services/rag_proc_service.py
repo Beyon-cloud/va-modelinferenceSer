@@ -85,13 +85,8 @@ class InfrenceService:
         )
 
         # Step 3: Call Inference model
-        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        ragProcessImpl = RagProcessImpl()
-        response = await ragProcessImpl.generate_structured_response(structure_input_data)
-        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
-
-
+        rag_process_impl = RagProcessImpl()
+        response = await rag_process_impl.generate_structured_response(structure_input_data)
 
 
         # Step 4: Generate output file
