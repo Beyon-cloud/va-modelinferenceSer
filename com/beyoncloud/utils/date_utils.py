@@ -2,8 +2,12 @@ from datetime import datetime
 import com.beyoncloud.config.settings.env_config as config
 
 def get_current_date_string() -> str:
-    currDate = datetime.now().strftime(config.COMMON_CONFIG.dateformat)
-    return currDate
+    current_date = datetime.now().strftime(config.COMMON_CONFIG["dateformat"])
+    return current_date
+
+def get_current_timestamp_string() -> str:
+    current_timestamp = datetime.now().strftime(config.COMMON_CONFIG["timestamp_format"])
+    return current_timestamp
 
 def current_timestamp_trim() -> str:
     """
@@ -12,7 +16,7 @@ def current_timestamp_trim() -> str:
     """
     now = datetime.now()
     # Format as DDMMYYYYHHMMSS
-    compact = now.strftime("%d%m%Y%H%M%S")
+    compact = now.strftime(config.COMMON_CONFIG["timestamp_trim"])
     return compact
 
 def current_date_trim() -> str:
@@ -22,5 +26,5 @@ def current_date_trim() -> str:
     """
     now = datetime.now()
     # Format as DDMMYYYY
-    compact = now.strftime("%d%m%Y")
+    compact = now.strftime(config.COMMON_CONFIG["date_trim"])
     return compact

@@ -6,12 +6,7 @@ from com.beyoncloud.schemas.prompt_gen_reqres_datamodel import (
     SchemaPromptRequest,SchemaPromptResponse, EntityPromptRequest, EntityPromptResponse, 
     SchemaPromptResponseBuilder, EntityPromptResponseBuilder
 )
-from com.beyoncloud.processing.prompt.prompt_generation.schema_prompt import SchemaPrompt
-from com.beyoncloud.processing.prompt.prompt_generation.enhance_document_processor import EnhancedDocumentProcessor
 from com.beyoncloud.utils.file_util import TextLoader, FileCreation, PathValidator, FetchContent
-from com.beyoncloud.schemas.prompt_gen_reqres_datamodel import (
-    DocumentType, DocumentSchema
-)
 import com.beyoncloud.config.settings.env_config as config
 from com.beyoncloud.utils.date_utils import current_timestamp_trim
 from com.beyoncloud.common.constants import FileExtension, Status, PromptType, CommonPatterns, FileFormats
@@ -19,6 +14,7 @@ from com.beyoncloud.services.database_service import DataBaseService
 from com.beyoncloud.schemas.rag_reqres_data_model import StructureInputData, StructureInputDataBuilder
 from com.beyoncloud.processing.rag_process_impl import RagProcessImpl
 from com.beyoncloud.utils.date_utils import current_date_trim
+from com.beyoncloud.processing.prompt.prompt_generation.prompt_generation_impl import PromptGenerationImpl
 
 logger = logging.getLogger(__name__)
 
@@ -89,38 +85,26 @@ class SchemaPromptService:
         )
 
         # Step 3: Detect document type
-        enhanced_document_processor = EnhancedDocumentProcessor()
         document_type = schema_prompt_request.document_type
-        """
-        doc_type = schema_prompt_request.document_type
-        detection_hints: Optional[List[str]] = None
-        if doc_type:
-            document_type = DocumentType(doc_type)
-            logger.info(f"Using provided document type: {doc_type}")
-        else:
-            document_type = enhanced_document_processor.detect_document_type(content, detection_hints)
-            logger.info(f"Detected document type: {document_type.value}")
-        """
 
         # Step 4: Generate schema template
-        ragProcessImpl = RagProcessImpl()
+        rag_process_impl = RagProcessImpl()
         response = None
         try:
-            response = await ragProcessImpl.generate_structured_response(structure_input_data)
+            response = await rag_process_impl.generate_structured_response(structure_input_data)
         except Exception as exc:
             # Log or re-raise depending on your application's logging strategy
             # For example: logger.exception("generate_structured_response failed")
+            logger.exception(f"generate_structured_response failed : {exc}")
             raise
 
-        # Step 4: Generate schema template
-        #schema_json = await enhanced_document_processor.generate_schema_template(schema_prompt_request)
-        # Step 4: Clean response and extract specific file content
+        # Step 5: Clean response and extract specific file content
         cleaned_response = fetch_content.fetch_schema_content(response, schema_prompt_request.desired_output_format)
 
         if not cleaned_response:
             raise ValueError("Schema JSON not extracted")
 
-        # Step 4: Generate output file
+        # Step 6: Generate output file
         sys_gen_schema_temp = cleaned_response
         file_extension = FileExtension.TEXT
         if (
@@ -161,7 +145,7 @@ class SchemaPromptService:
         else:
             generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
 
-        # Step 5: Save date in DB
+        # Step 7: Save date in DB
         print("Before save log table")
         print(self.db_service)
 
@@ -176,7 +160,7 @@ class SchemaPromptService:
         uuid_id = await self.db_service.save_or_update_schema_prompt_log(schema_prompt_request, oth_val)
         print(f"after save log table -- {uuid_id}")
 
-        # Step 6: Generate Response
+        # Step 8: Generate Response
         schema_prompt_response = (SchemaPromptResponseBuilder(schema_prompt_request)
                     .with_inference_result_storage_path(output_dir_path)
                     .with_output_filename(output_filename)
@@ -189,10 +173,8 @@ class SchemaPromptService:
 
         # Step 1: Extract source document content
         text_loader = TextLoader()
-        source_content = ""
 
         # Step 2: Extract schema template
-
         schema_filepath = entity_prompt_request.schema_template_filepath
         logger.info(f"Loading document: {schema_filepath}")
         if not schema_filepath:
@@ -205,24 +187,7 @@ class SchemaPromptService:
         if not schema_template:
             raise ValueError("Schema template is empty or could not be extracted")
 
-        # Step 3: Detect document type
-        enhanced_document_processor = EnhancedDocumentProcessor()
-        document_type = entity_prompt_request.document_type
-
-        """
-        doc_type = entity_prompt_request.document_type
-        detection_hints: Optional[List[str]] = None
-        if doc_type:
-            document_type = DocumentType(doc_type)
-            logger.info(f"Using provided document type: {doc_type}")
-        else:
-            document_type = enhanced_document_processor.detect_document_type(source_content, detection_hints)
-            logger.info(f"Detected document type: {document_type.value}")
-        """
-
-        # Step 4: Get schema object
-        custom_requirements: Optional[Dict[str, Any]] = None
-        print("before builder.........")
+        # Step 3: Get schema object
         # Build the entity request using the builder pattern, ensuring the builder returns expected shape.
         structure_input_data = (
             StructureInputDataBuilder()
@@ -238,22 +203,16 @@ class SchemaPromptService:
             .with_schema_template_filepath(entity_prompt_request.schema_template_filepath)
             .build()
         )
-        print("After builder")
-        prompts = await enhanced_document_processor.generate_extraction_prompts(source_content, document_type, schema_template, structure_input_data)
+        prompt_generation_impl = PromptGenerationImpl()
+        prompts = await prompt_generation_impl.generate_extraction_prompts(
+            schema_template, 
+            structure_input_data
+        )
 
-        # Step 5: Save into database
+        # Step 4: update prompt system and user template into database
 
         # Step 5: Generate Response
         entity_prompt_response = (EntityPromptResponseBuilder(entity_prompt_request)
-                    #.with_request_reference_id(entity_prompt_request.request_reference_id)
-                    #.with_organization_id(entity_prompt_request.organization_id)
-                    #.with_domain_id(entity_prompt_request.domain_id)
-                    #.with_user_id(entity_prompt_request.user_id)
-                    #.with_source_path(entity_prompt_request.source_file_path)
-                    #.with_desired_output_mode(entity_prompt_request.desired_output_mode)
-                    #.with_document_type(entity_prompt_request.document_type)
-                    #.with_desired_output_format(entity_prompt_request.desired_output_format)
-                    #.with_schema_template_filepath(entity_prompt_request.schema_template_filepath)
                     .with_system_prompt(prompts["system_prompt"])
                     .with_user_prompt(prompts["user_prompt"])
                     .with_input_variables(prompts["input_variables"])

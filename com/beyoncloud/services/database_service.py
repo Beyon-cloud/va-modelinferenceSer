@@ -83,7 +83,7 @@ class DataBaseService:
             print(f"result -- {result}")
             return result
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "Failed to upsert dps_src for payload=%s, status=%s",
                 schema_prompt_request, oth_val, exc_info=True
@@ -108,7 +108,7 @@ class DataBaseService:
             )
             return result
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "Failed to upsert dps_src for payload=%s, status=%s",
                 payload, status, exc_info=True

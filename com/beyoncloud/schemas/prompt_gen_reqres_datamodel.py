@@ -249,9 +249,9 @@ class EntityPromptResponse(EntityPromptRequest):
         user_prompt (str): Input propmpt variables.
     """
 
-    system_prompt: StrictStr = Field(..., description="Schema file path")
-    user_prompt: StrictStr = Field(..., description="Schema file path")
-    input_variables: StrictStr = Field(..., description="Schema file path")
+    system_prompt: StrictStr = Field(..., description="System prompt")
+    user_prompt: StrictStr = Field(..., description="User prompt")
+    input_variables: StrictStr = Field(..., description="Input variables")
 
 class EntityPromptResponseBuilder:
     def __init__(self, entity_prompt_request: EntityPromptRequest) -> EntityPromptResponse:

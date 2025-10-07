@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 from typing import Dict,Any, List, Optional, Union, Tuple
 from asyncpg import Record
 from com.beyoncloud.interface.postgresql_intf import PostgreSqlInterface
@@ -462,112 +462,96 @@ class PostgresSqlImpl(PostgreSqlInterface):
                 results = await session.execute(stmt)
                 return results.all() if column_name else results.scalars().all()
 
+
+    # Helper: Build ORDER BY
+    def _apply_ordering(self, stmt, order_by):
+        if not order_by:
+            return stmt
+
+        order_criteria = []
+        for item in order_by:
+            if isinstance(item, tuple):
+                col, direction = item
+                order_criteria.append(
+                    asc(col) if direction.lower() == "asc" else desc(col)
+                )
+            else:
+                order_criteria.append(asc(item))
+        return stmt.order_by(*order_criteria)
+
+    # Helper: Apply LIMIT
+    def _apply_limit(self, stmt, limit):
+        return stmt.limit(limit) if limit else stmt
+
+    # Helper: Apply FILTERS
+    def _apply_filters(self, stmt, filters):
+        return stmt.where(and_(*filters)) if filters else stmt
+
+    # Helper: Apply VECTOR FILTER
+    def _apply_vector_filter(self, stmt, vector_filter):
+        if not vector_filter:
+            return stmt
+
+        vec_col, query_vec, method, threshold = vector_filter
+        similarity_methods = {
+            "l2": vec_col.l2_distance,
+            "cosine": vec_col.cosine_distance,
+            "dot": vec_col.max_inner_product,
+        }
+
+        sim_func = similarity_methods.get(method.lower())
+        if sim_func is None:
+            raise ValueError(f"Unsupported similarity method: {method}")
+
+        similarity_expr = sim_func(query_vec)
+        if threshold is not None:
+            stmt = stmt.where(similarity_expr <= threshold)
+        return stmt.order_by(similarity_expr)
+
+    # Helper: Apply JOINS
+    def _apply_joins(self, stmt, join_models):
+        if not join_models:
+            return stmt
+        for join_model, on_condition in join_models:
+            stmt = stmt.join(join_model, on_condition)
+        return stmt
+
     async def sqlalchemy_dynamic_select(
         self,
-        model: Any,  # automap class
-        filters: Optional[List[Any]] = None,  # list of filter conditions
-        order_by: Optional[List[Union[Any, tuple]]] = None,  # list of columns or (column, "asc"/"desc")
-        column_names: Optional[List[Any]] = None,  # list of columns to select
-        limit: Optional[int] = None
+        model: Any,
+        filters: Optional[List[Any]] = None,
+        order_by: Optional[List[Union[Any, tuple]]] = None,
+        column_names: Optional[List[Any]] = None,
+        limit: Optional[int] = None,
     ):
-        """
-        Example Usage:
-        
-
-        """
+        """Dynamically build and execute SELECT queries"""
         async with self.postgres_client.orm_session() as session:
-            # Select entire model or specific columns
-            if column_names:
-                stmt = select(*column_names)
-            else:
-                stmt = select(model)
+            stmt = select(*column_names) if column_names else select(model)
+            stmt = self._apply_filters(stmt, filters)
+            stmt = self._apply_ordering(stmt, order_by)
+            stmt = self._apply_limit(stmt, limit)
 
-            # Add WHERE clause if filters provided
-            if filters:
-                stmt = stmt.where(and_(*filters))
-
-            # Add ORDER BY
-            if order_by:
-                order_criteria = []
-                for item in order_by:
-                    if isinstance(item, tuple):
-                        col, direction = item
-                        order_criteria.append(asc(col) if direction.lower() == "asc" else desc(col))
-                    else:
-                        order_criteria.append(asc(item))  # default to ASC if not specified
-                stmt = stmt.order_by(*order_criteria)
-
-            # Add limit
-            if limit:
-                stmt = stmt.limit(limit)
-
-            # Execute and return results
             results = await session.execute(stmt)
             return results.all() if column_names else results.scalars().all()
 
-
     async def sqlalchemy_dynamic_join_select(
         self,
-        base_model: Any,  # main automap model
-        join_models: Optional[List[tuple]] = None,  # list of (model_to_join, on_condition)
+        base_model: Any,
+        join_models: Optional[List[tuple]] = None,
         filters: Optional[List[Any]] = None,
         order_by: Optional[List[Union[Any, tuple]]] = None,
         select_columns: Optional[List[Any]] = None,
         limit: Optional[int] = None,
-        vector_filter: Optional[Tuple[Any, List[float], str, Optional[float]]] = None
+        vector_filter: Optional[Tuple[Any, List[float], str, Optional[float]]] = None,
     ):
-        """
-        Example Usage:
-        
-
-        """
+        """Dynamically build and execute JOIN SELECT queries"""
         async with self.postgres_client.orm_session() as session:
-            # Start select statement
             stmt = select(*select_columns) if select_columns else select(base_model)
+            stmt = self._apply_joins(stmt, join_models)
+            stmt = self._apply_filters(stmt, filters)
+            stmt = self._apply_vector_filter(stmt, vector_filter)
+            stmt = self._apply_ordering(stmt, order_by)
+            stmt = self._apply_limit(stmt, limit)
 
-            # Apply JOINs
-            if join_models:
-                for join_model, on_condition in join_models:
-                    stmt = stmt.join(join_model, on_condition)
-
-            # Add WHERE filters
-            if filters:
-                stmt = stmt.where(and_(*filters))
-
-            # Apply vector filter
-            if vector_filter:
-                vec_col, query_vec, method, threshold = vector_filter
-
-                similarity_expr = {
-                    "l2": vec_col.l2_distance(query_vec),
-                    "cosine": vec_col.cosine_distance(query_vec),
-                    "dot": vec_col.max_inner_product(query_vec),
-                }.get(method.lower())
-
-                if similarity_expr is None:
-                    raise ValueError(f"Unsupported similarity method: {method}")
-
-                if similarity_expr is not None:
-                    stmt = stmt.where(similarity_expr <= threshold)
-
-                # Default: order by similarity
-                stmt = stmt.order_by(similarity_expr)
-
-            # Apply ORDER BY
-            if order_by:
-                order_criteria = []
-                for item in order_by:
-                    if isinstance(item, tuple):
-                        col, direction = item
-                        order_criteria.append(asc(col) if direction.lower() == "asc" else desc(col))
-                    else:
-                        order_criteria.append(asc(item))  # default to ASC
-                stmt = stmt.order_by(*order_criteria)
-
-            # Apply LIMIT
-            if limit:
-                stmt = stmt.limit(limit)
-
-            # Execute and return results
             results = await session.execute(stmt)
             return results.all()

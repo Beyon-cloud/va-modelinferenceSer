@@ -7,6 +7,10 @@ from com.beyoncloud.utils.file_util import YamlLoader, JsonLoader
 class ModelConverter:
 
     def __init__(self):
+        # Intentionally empty for now.
+        # Reason: This class does not require instance state at construction
+        # and will initialize attributes lazily when the analysis runs.
+        # If future attributes are needed, initialize them here.
         pass
 
     async def convert_json_to_basemodel(self, json_fpath: str, base_model: Type[BaseModel]) -> BaseModel:

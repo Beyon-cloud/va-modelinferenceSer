@@ -652,7 +652,7 @@ class DynamicPromptRouter:
         return final_prompt
 
     
-    def _get_domain_examples(self, domain: str, entity_str: str) -> str:
+    def _get_domain_examples(self, domain: str) -> str:
         """Generate domain-specific examples"""
         examples = {
             "medical": """Example 1: "Dr. Sarah Johnson treated the patient at Mayo Clinic."
@@ -756,7 +756,7 @@ Example 2: "The meeting is scheduled for January 15, 2024."
         
         return roles.get(domain, roles["general"]).get(complexity, "an expert analyst")
     
-    def _generate_dynamic_schema(self, entity_str: str, analysis: QueryAnalysis) -> str:
+    def _generate_dynamic_schema(self, analysis: QueryAnalysis) -> str:
         """Generate dynamic JSON schema based on analysis"""
         entity_types = {e['label'] for e in analysis.entities_detected}
         if not entity_types:

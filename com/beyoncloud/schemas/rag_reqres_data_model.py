@@ -122,8 +122,8 @@ class RagLogQryModelBuilder:
             metadata =  {}
         )
 
-    def with_orgId(self, orgId: int) -> Self:
-        self.rag_log_qry_model.orgId = orgId
+    def with_org_id(self, org_id: int) -> Self:
+        self.rag_log_qry_model.orgId = org_id
         return self
 
     def with_query(self, query: str) -> Self:

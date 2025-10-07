@@ -5,6 +5,7 @@ from com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_grpc impo
 from com.beyoncloud.grpc.protos.infrence_model import rag_to_infrence_service_pb2 as pb
 from com.beyoncloud.grpc.server.infrence_model.utils.grpc_inf_util import get_grpc_inf_resp_datamodel
 from com.beyoncloud.processing.generation.generator import RagGeneratorProcess
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string
 
 import logging
 
@@ -22,13 +23,13 @@ class RAGInfService(RAGInfServiceBase):
         request_model = request.dms_request or pb.RagToInfrenceRequest.DMSRequest()
         search_result = request.search_result or []
 
-        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        starttime = get_current_timestamp_string()
         start_time = time.time()
 
         rag_generator_process = RagGeneratorProcess()
         response = await rag_generator_process.generate_answer(request_model, search_result)
 
-        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        endtime = get_current_timestamp_string()
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         print(f"Start time : {starttime} --> End time : {endtime} --> elapsed: {elapsed}")

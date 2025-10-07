@@ -61,8 +61,8 @@ def convert_dataclass_to_json(data_instance: Any) -> str:
     return json.dumps(asdict(data_instance), indent=2, default=str)
 
 @staticmethod
-def convertPathToImageMulti(lstFilepath: List[str]):
-    return [Image.open(Path(path)) for path in lstFilepath]
+def convert_path_to_image_multi(lst_filepath: List[str]):
+    return [Image.open(Path(path)) for path in lst_filepath]
 
 @staticmethod
 def convert_path_to_image_single(filepath: str):
@@ -73,23 +73,23 @@ def convert_text_to_document(text: str) -> Document:
     return [Document(page_content=text)]
 
 @staticmethod
-def convert_mulit_text_to_document(textList: List[str]) -> List[Document]:
-    documentList = [Document(page_content=text) for text in textList]
-    return documentList
+def convert_mulit_text_to_document(text_list: List[str]) -> List[Document]:
+    document_list = [Document(page_content=text) for text in text_list]
+    return document_list
 
 @staticmethod
-def convert_basemodel_to_dict(bsaeModel: BaseModel) -> Dict[str, Any]:
-    dictOutput = bsaeModel.model_dump()
-    return dictOutput
+def convert_basemodel_to_dict(base_model: BaseModel) -> Dict[str, Any]:
+    dict_output = base_model.model_dump()
+    return dict_output
 
 @staticmethod
-def convert_dict_to_basemodel(dictData, baseModel: Type[BaseModel]) -> BaseModel:
-    baseModelInstance = None
+def convert_dict_to_basemodel(dict_data, base_model: Type[BaseModel]) -> BaseModel:
+    base_model_instance = None
     try:
-        baseModelInstance = baseModel(**dictData)
+        base_model_instance = base_model(**dict_data)
         
     except Exception as e:
         print(f"Error creating Pydantic model: {e}")
         
-    return baseModelInstance
+    return base_model_instance
 

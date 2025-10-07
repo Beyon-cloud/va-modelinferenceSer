@@ -11,6 +11,7 @@ from com.beyoncloud.schemas.rag_reqres_data_model import (
     StructureRespProcessResponse
 )
 import com.beyoncloud.config.settings.env_config as config
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +19,11 @@ rag_process_router = APIRouter()
 
 @rag_process_router.post("/process/")
 async def rag_process(rag_req_data_model: RagReqDataModel):
-    starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    starttime = get_current_timestamp_string()
     
     response = await rag_chat_process(rag_req_data_model)
     
-    endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    endtime = get_current_timestamp_string()
     logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
     return response
 

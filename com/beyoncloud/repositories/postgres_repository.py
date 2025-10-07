@@ -193,7 +193,7 @@ class PostgreSqlRepository(BaseRepository):
                     return values
                 return values[0] if values else None
 
-        except Exception as e:
+        except Exception:
             logger.exception("Update failed for model=%s", self.model.__name__)
             raise
 

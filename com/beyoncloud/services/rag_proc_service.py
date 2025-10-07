@@ -29,15 +29,16 @@ from com.beyoncloud.utils.date_utils import current_date_trim
 import com.beyoncloud.config.settings.env_config as config
 from com.beyoncloud.services.schema_prompt_service import SchemaPromptService
 from com.beyoncloud.processing.prompt.prompt_template import get_temp_prompt_template
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string
 
 logger = logging.getLogger(__name__)
 
-async def rag_chat_process(ragReqDataModel: RagReqDataModel) -> RagRespDataModel:
+async def rag_chat_process(rag_req_data_model: RagReqDataModel) -> RagRespDataModel:
 
-    starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    ragProcessImpl = RagProcessImpl()
-    response = await ragProcessImpl.generateRAGResponse(ragReqDataModel)
-    endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    starttime = get_current_timestamp_string()
+    rag_process_impl = RagProcessImpl()
+    response = await rag_process_impl.generate_rag_response(rag_req_data_model)
+    endtime = get_current_timestamp_string()
     logger.info("Process taking time from '"+starttime+"' to '"+endtime+"'")
     return response
 
@@ -106,7 +107,6 @@ class InfrenceService:
 
         # Step 5: Clean response and extract specific file content
         cleaned_response = fetch_content.fetch_schema_content(response, final_output_format)
-        print("Step 5 - completed")
         print(f"cleaned_response --> {cleaned_response}")
 
         file_creation = FileCreation()
@@ -135,7 +135,6 @@ class InfrenceService:
             generated_filepath = file_creation.create_json_file(output_dir_path,output_filename,cleaned_response)
         else:
             generated_filepath = file_creation.create_text_file(output_dir_path,output_filename,cleaned_response)
-        print("Step 5 - completed")
 
         # Step 6: Response datamodel formation
         structure_resp_process_response = (StructureRespProcessResponseBuilder(structure_resp_process_request)
@@ -155,8 +154,8 @@ class InfrenceService:
 
         # Step 1: Read source file context data
         if not structure_resp_process_request.ocr_result_file_path:
-            logger.info("OCR result file path is empty")
-            raise ValueError("OCR result file path is empty")
+            logger.info("temp_structure_resp_process - OCR result file path is empty")
+            raise ValueError("temp_structure_resp_process - OCR result file path is empty")
 
         fetch_content = FetchContent()
         file_path = structure_resp_process_request.ocr_result_file_path.lower()
@@ -233,7 +232,6 @@ class InfrenceService:
         # Step 7: Call inference model to get final response.
         rag_generator_process = RagGeneratorProcess()
         if config.ENABLE_HF_INFRENCE_YN == "Y":
-            print("Step 7 - if")
             response = await rag_generator_process.temp_hf_response(
                 structure_input_data,
                 entity_prompt_response.system_prompt, 
@@ -241,8 +239,6 @@ class InfrenceService:
                 entity_prompt_response.input_variables
             )
         else:
-            print("Step 7 - else")
-            #response = await rag_generator_process.generate_structured_response(structure_input_data)
             response= await rag_generator_process.temp_generate_structured_response(
                 structure_input_data,
                 entity_prompt_response.system_prompt, 

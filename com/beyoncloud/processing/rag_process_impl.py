@@ -15,6 +15,7 @@ from com.beyoncloud.db.postgresql_connectivity import PostgreSqlConnectivity
 from com.beyoncloud.config.settings.table_mapper_config import TableSettings
 from com.beyoncloud.utils.file_util import TextLoader
 import com.beyoncloud.config.settings.env_config as config
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class RagProcessImpl:
         """
         self.table_settings = TableSettings()
 
-    async def generateRAGResponse(self, rag_req_datamodel: RagReqDataModel, search_result: list[dict[str, Any]] = []):
+    async def generate_rag_response(self, rag_req_datamodel: RagReqDataModel, search_result: list[dict[str, Any]] = []):
         """
         Executes the basic RAG flow using a semantic search and a query string.
 
@@ -47,15 +48,15 @@ class RagProcessImpl:
             str: The generated answer based on retrieved context.
         """
 
-        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        starttime = get_current_timestamp_string()
         start_time = time.time()
         query = self.get_query(rag_req_datamodel)
-        orgId = self.getOrgId(rag_req_datamodel)
+        org_id = self.get_orgid(rag_req_datamodel)
 
         rag_generator_process = RagGeneratorProcess()
         chat_history = self.get_chat_history(rag_req_datamodel)
         response = await rag_generator_process.generate_answer(rag_req_datamodel,query, search_result, chat_history)
-        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        endtime = get_current_timestamp_string()
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         print(f"Start time : {starttime} --> End time : {endtime} --> elapsed: {elapsed}")
@@ -86,7 +87,7 @@ class RagProcessImpl:
                 ]
 
             rag_log_qry_model = RagLogQryModel(
-                orgId = orgId,
+                orgId = org_id,
                 query = query,
                 response = response,
                 search_result_json = search_result_json,
@@ -112,15 +113,15 @@ class RagProcessImpl:
         """
 
         query = ""
-        userInputs = rag_req_datamodel.user_input
-        print(userInputs)
-        if userInputs:
-            queryLst = [ui.content for ui in userInputs if (ui.type == "text" or ui.type == "audio") and ui.content]
-            query = queryLst[0]
+        user_inputs = rag_req_datamodel.user_input
+        print(user_inputs)
+        if user_inputs:
+            query_lst = [ui.content for ui in user_inputs if (ui.type == "text" or ui.type == "audio") and ui.content]
+            query = query_lst[0]
 
         return query
 
-    def getOrgId(self, rag_req_datamodel: RagReqDataModel) -> int:
+    def get_orgid(self, rag_req_datamodel: RagReqDataModel) -> int:
         """
         Extracts the organization ID from the RAG request.
 
@@ -131,8 +132,8 @@ class RagProcessImpl:
             int: The organization ID.
         """
 
-        orgId = rag_req_datamodel.org_id
-        return orgId
+        orgid = rag_req_datamodel.org_id
+        return orgid
 
     def get_chat_history(self, rag_req_datamodel: RagReqDataModel) -> List[Dict[str, str]]:
         """
@@ -188,7 +189,7 @@ class RagProcessImpl:
             str: The generated answer based on retrieved context.
         """
 
-        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        starttime = get_current_timestamp_string()
         start_time = time.time()
         rag_generator_process = RagGeneratorProcess()
 
@@ -198,15 +199,15 @@ class RagProcessImpl:
             response = await rag_generator_process.generate_structured_response(structure_input_data)
 
         
-        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        endtime = get_current_timestamp_string()
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         print(f"Start time : {starttime} --> End time : {endtime} --> elapsed: {elapsed}")
         try:
             
-            fullContext = structure_input_data.context_data
+            full_context = structure_input_data.context_data
             file_path = structure_input_data.source_path
-            search_result_json = [fullContext]
+            search_result_json = [full_context]
 
             metadata = {
                 "starttime": starttime,
@@ -232,7 +233,7 @@ class RagProcessImpl:
 
         return response
 
-    def get_entity_resp_model(self, structure_input_data: StructureInputData, response: str) -> EntityResponse:
+    def get_entity_resp_model(self, response: str) -> EntityResponse:
         """
         Constructs the response data model from the RAG response.
 
@@ -274,8 +275,8 @@ class RagProcessImpl:
             self.table_settings.get_db_column_name("schema1", "RagQryLogs", "metadata"): rag_log_qry_model.metadata,
 
         }
-        RagQryLogs = pg_conn.base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
-        qry_log = RagQryLogs(**column_data)
+        rag_qry_logs = pg_conn.base.classes[self.table_settings.get_db_table_name("schema1", "RagQryLogs")]
+        qry_log = rag_qry_logs(**column_data)
         pg = PostgresSqlImpl()
         await pg.sqlalchemy_insert_one(qry_log, return_field = None)
 

@@ -289,11 +289,7 @@ class WeaviateClient:
             for page in reader.pages:
                 pdf_text += page.extract_text() + "\n"
 
-        #print(f"text --> {text}")
-
         file_b64 = base64.b64encode(file_bytes).decode("utf-8")
-
-        #pdf_text = self.extract_pdf_text(file_path)
 
         meta = {
             "title": path.stem,

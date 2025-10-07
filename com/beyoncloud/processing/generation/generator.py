@@ -29,6 +29,7 @@ from com.beyoncloud.common.constants import PromptType, CommonPatterns
 from com.beyoncloud.processing.prompt.prompt_generation.huggingface_llama_connect import HuggingFaceLlama3Client
 from com.beyoncloud.db.postgresql_impl import PostgresSqlImpl
 from com.beyoncloud.db.postgresql_connectivity import PostgreSqlConnectivity
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +320,7 @@ class RagGeneratorProcess:
         final_system_prompt = prompt_output["system_prompt_template"].format_map(SafeDict(variable_map))
         final_user_prompt = prompt_output["user_prompt_template"].format_map(SafeDict(variable_map))
 
-        starttime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        starttime = get_current_timestamp_string()
         start_time = time.time()
         response = llama3_client.generate_sync(
                     system_prompt=final_system_prompt,
@@ -328,7 +329,7 @@ class RagGeneratorProcess:
                     temperature=0.1,
                     max_tokens=2048
                 )
-        endtime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        endtime = get_current_timestamp_string()
         end_time = time.time()
         elapsed = end_time - start_time  # in seconds (float)
         
@@ -347,7 +348,7 @@ class RagGeneratorProcess:
             }
 
             rag_log_qry_model = (RagLogQryModelBuilder()
-                .with_orgId(structure_input_data.organization_id)
+                .with_org_id(structure_input_data.organization_id)
                 .with_query(CommonPatterns.EMPTY_SPACE)
                 .with_response(response)
                 .with_search_result_json([full_context])

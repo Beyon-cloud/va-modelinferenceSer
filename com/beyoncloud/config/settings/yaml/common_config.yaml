@@ -1,3 +1,5 @@
 dateformat: "%d/%m/%Y"
 timestamp_format: "%d/%m/%Y %H:%M:%S"
 timestamp_microsec_format: "%d/%m/%Y %H:%M:%S.%f"
+date_trim: "%d%m%Y"
+timestamp_trim: "%d%m%Y%H%M%S"
