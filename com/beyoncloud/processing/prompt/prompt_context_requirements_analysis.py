@@ -1,7 +1,6 @@
 import logging
 import re
-from typing import List, Dict, Any, Optional, Tuple, Union
-from com.beyoncloud.schemas.prompt_datamodel import QueryIntent
+from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,41 +13,36 @@ class ContextRequirementsAnalysis:
         # If future attributes are needed, initialize them here.
         pass
 
+    # Helper to apply a regex and append a requirement if matched
+    def _maybe_add(self, conditions_text: str, pattern: str, requirement_key: str, requirements: List[str]):
+        if re.search(pattern, conditions_text):
+            requirements.append(requirement_key)
+
     def _analyze_context_requirements_with_model(self, query: str, entities: List[Dict]) -> List[str]:
         """Model-based context requirements analysis"""
-        requirements = []
-        query_lower = query.lower()
-        
-        # Previous knowledge requirements
-        if re.search(r'\b(previous|before|earlier|remember|context)\b', query_lower):
-            requirements.append('previous_knowledge')
-        
-        # External data requirements
-        if re.search(r'\b(verify|check|validate|reference|database)\b', query_lower):
-            requirements.append('external_verification')
-        
-        # Domain expertise requirements
-        if re.search(r'\b(expert|professional|specialized|advanced)\b', query_lower):
-            requirements.append('domain_expertise')
-        
-        # Example requirements
-        if re.search(r'\b(example|sample|demonstrate|show)\b', query_lower):
-            requirements.append('examples_needed')
-        
-        # Explanation requirements
-        if re.search(r'\b(explain|why|how|reason)\b', query_lower):
-            requirements.append('explanation_needed')
-        
-        # Formatting requirements
-        if re.search(r'\b(format|json|csv|structure|table)\b', query_lower):
-            requirements.append('specific_formatting')
-        
+        requirements: List[str] = []
+        q = (query or "").lower()
+
+        # Define pattern-driven checks
+        pattern_definitions: List[Dict[str, Any]] = [
+            {"pattern": r'\b(previous|before|earlier|remember|context)\b', "req": "previous_knowledge"},
+            {"pattern": r'\b(verify|check|validate|reference|database)\b', "req": "external_verification"},
+            {"pattern": r'\b(expert|professional|specialized|advanced)\b', "req": "domain_expertise"},
+            {"pattern": r'\b(example|sample|demonstrate|show)\b', "req": "examples_needed"},
+            {"pattern": r'\b(explain|why|how|reason)\b', "req": "explanation_needed"},
+            {"pattern": r'\b(format|json|csv|structure|table)\b', "req": "specific_formatting"},
+        ]
+
+        # Apply the pattern definitions
+        for d in pattern_definitions:
+            self._maybe_add(q, d["pattern"], d["req"], requirements)
+
         # Entity-based requirements
-        entity_types = [e['label'] for e in entities]
+        entity_types = [e.get('label') for e in entities]
         if 'PERSON' in entity_types or 'ORGANIZATION' in entity_types:
             requirements.append('entity_verification')
-        
+
         if len(entity_types) > 3:
             requirements.append('complex_entity_handling')
-        
+
         return requirements

@@ -241,7 +241,7 @@ class WeaviateClient:
             return []
 
 
-    def search_by_fileX(self, query: str, top_k: int = 5):
+    def search_by_file(self, query: str, top_k: int = 5):
         collection = self.client.collections.get("FileDoc")
         response = collection.query.get("FileDoc", ["title", "filename", "path", "mimeType"])\
             .with_where({"path": {"operator": "Like", "valueText": f"%{query}%"}})\

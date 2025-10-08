@@ -15,56 +15,47 @@ class PatternRecognition:
         # If future attributes are needed, initialize them here.
         pass
 
+    _PATTERN_DEFINITIONS = [
+    {"type": "question", "pattern": r'\?', "indicator": "question_mark", "check": lambda t: t.strip().endswith('?')},
+    {"type": "instruction", "pattern": r'\b(extract|find|identify|get|list|show)\b', "indicator": "imperative_verb"},
+    {"type": "learning", "pattern": r'\b(how|teach|show me|example|learn)\b', "indicator": "learning_keywords"},
+    {"type": "format_request", "pattern": r'\b(json|csv|table|format|structure)\b', "indicator": "format_keywords"},
+    {"type": "batch_processing", "pattern": r'\b(multiple|all|many|batch|documents|files)\b', "indicator": "quantity_keywords"},
+    {"type": "reasoning_request", "pattern": r'\b(why|explain|reason|because|how)\b', "indicator": "reasoning_keywords"},
+    {"type": "complexity_indicator", "pattern": r'\b(comprehensive|detailed|thorough|advanced|complex)\b', "indicator": "complexity_adjectives"},
+    {"type": "interaction_request", "pattern": r'\b(let\'s|can we|together|discuss|chat)\b', "indicator": "interaction_keywords"},
+]
+
     def _recognize_query_patterns(self, query: str) -> List[Dict[str, Any]]:
-        """Advanced pattern recognition in queries"""
+        q = query.strip().lower()
         patterns = []
-        
-        # Question patterns
-        if query.strip().endswith('?'):
+
+        # Special-case: ends with '?'
+        if q.endswith('?'):
             patterns.append({'type': 'question', 'confidence': 0.95, 'indicator': 'question_mark'})
-        
-        # Instruction patterns
-        if re.search(r'\b(extract|find|identify|get|list|show)\b', query.lower()):
-            patterns.append({'type': 'instruction', 'confidence': 0.9, 'indicator': 'imperative_verb'})
-        
-        # Learning patterns
-        if re.search(r'\b(how|teach|show me|example|learn)\b', query.lower()):
-            patterns.append({'type': 'learning', 'confidence': 0.85, 'indicator': 'learning_keywords'})
-        
-        # Format request patterns
-        if re.search(r'\b(json|csv|table|format|structure)\b', query.lower()):
-            patterns.append({'type': 'format_request', 'confidence': 0.9, 'indicator': 'format_keywords'})
-        
-        # Batch processing patterns
-        if re.search(r'\b(multiple|all|many|batch|documents|files)\b', query.lower()):
-            patterns.append({'type': 'batch_processing', 'confidence': 0.8, 'indicator': 'quantity_keywords'})
-        
-        # Reasoning patterns
-        if re.search(r'\b(why|explain|reason|because|how)\b', query.lower()):
-            patterns.append({'type': 'reasoning_request', 'confidence': 0.85, 'indicator': 'reasoning_keywords'})
-        
-        # Complexity patterns
-        if re.search(r'\b(comprehensive|detailed|thorough|advanced|complex)\b', query.lower()):
-            patterns.append({'type': 'complexity_indicator', 'confidence': 0.8, 'indicator': 'complexity_adjectives'})
-        
-        # Interaction patterns
-        if re.search(r'\b(let\'s|can we|together|discuss|chat)\b', query.lower()):
-            patterns.append({'type': 'interaction_request', 'confidence': 0.8, 'indicator': 'interaction_keywords'})
-        
-        # Domain-specific patterns
+
+        for p in self._PATTERN_DEFINITIONS:
+            if p.get("check"):
+                if p["check"](q):
+                    patterns.append({"type": p["type"], "confidence": 0.9, "indicator": p.get("indicator")})
+            else:
+                if re.search(p["pattern"], q):
+                    patterns.append({"type": p["type"], "confidence": 0.9, "indicator": p.get("indicator")})
+
+        # Domain indicators (kept as-is, but applied to q)
         domain_indicators = {
             'medical': r'\b(patient|doctor|medical|clinical|diagnosis|treatment)\b',
             'legal': r'\b(court|legal|law|contract|case|attorney)\b',
             'financial': r'\b(financial|money|investment|bank|stock|trading)\b',
             'technical': r'\b(software|code|algorithm|system|technical|API)\b'
         }
-        
+
         for domain, pattern in domain_indicators.items():
-            if re.search(pattern, query.lower()):
+            if re.search(pattern, q):
                 patterns.append({
-                    'type': f'domain_{domain}', 
-                    'confidence': 0.85, 
+                    'type': f'domain_{domain}',
+                    'confidence': 0.85,
                     'indicator': f'{domain}_terminology'
                 })
-        
+
         return patterns

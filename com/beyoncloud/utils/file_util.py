@@ -55,8 +55,8 @@ class JsonLoader:
         """
         try:
             with open(file_path, "r", encoding='utf-8') as f:
-                jsonData = json.load(f)
-            return jsonData
+                json_data = json.load(f)
+            return json_data
         except FileNotFoundError:
             logger.error(f"Error: The file '{file_path}' was not found.")
         except Exception as e:
