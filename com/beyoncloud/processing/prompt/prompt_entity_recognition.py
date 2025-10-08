@@ -1,14 +1,11 @@
-﻿import torch
-import re
-import torch.nn as nn
-import numpy as np
+﻿import re
 from transformers import (
-    AutoTokenizer, AutoModelForTokenClassification, AutoModelForSequenceClassification,
-    BertTokenizer, BertForSequenceClassification, BertModel, BertConfig,
-    pipeline, Trainer, TrainingArguments, AutoModel
+    AutoTokenizer, 
+    AutoModelForTokenClassification,
+    pipeline
 )
 import logging
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
 
@@ -103,9 +100,12 @@ class AdvancedEntityRecognizer:
             patterns.append({'type': 'date_format', 'confidence': 0.95})
         
         # Pattern: Money format
-        money_pattern = r'([$€£¥]\s?\d+(?:\.\d{2})?|\d+(?:\.\d{2})?\s*(?:dollars?|euros?|pounds?))'
-        if re.match(money_pattern, entity_text, re.IGNORECASE):
+        money_symbol_pattern = r'[$€£¥]\s?\d+(?:\.\d{1,2})?'
+        money_word_pattern = r'\d+(?:\.\d{1,2})?\s*(?:dollars?|euros?|pounds?)'
+
+        if re.match(f'(?:{money_symbol_pattern}|{money_word_pattern})', entity_text, re.IGNORECASE):
             patterns.append({'type': 'money_format', 'confidence': 0.9})
+
         
         return patterns
     

@@ -168,6 +168,7 @@ class Delimiter:
     JSON = "```"
     CSV = "```"
     XLSX = "```"
+    PDF = "```"
 
 class FileExtension:
     TEXT = ".txt"

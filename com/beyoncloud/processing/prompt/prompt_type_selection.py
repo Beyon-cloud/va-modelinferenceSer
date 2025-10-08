@@ -1,18 +1,20 @@
-import logging
-import re
-from typing import List, Dict, Any, Optional, Tuple, Union
+﻿import logging
+from typing import List, Dict
 from com.beyoncloud.schemas.prompt_datamodel import QueryIntent, QueryComplexity, PromptType
 
 logger = logging.getLogger(__name__)
 
+
 class PromptTypeSelection:
 
     def __init__(self):
-        # Prompt type mapping
         self.prompt_type_mapping = self._initialize_prompt_mapping()
 
+    # -------------------------
+    # Initialization
+    # -------------------------
     def _initialize_prompt_mapping(self) -> Dict[str, List[PromptType]]:
-        """Initialize mapping from predictions to prompt types"""
+        """Initialize mapping from predictions to prompt types."""
         return {
             # Intent-based mapping
             "simple_extraction": [PromptType.INSTRUCTION, PromptType.ZERO_SHOT],
@@ -25,119 +27,100 @@ class PromptTypeSelection:
             "context_dependent": [PromptType.CONTEXT_AWARE, PromptType.MEMORY_AUGMENTED, PromptType.RETRIEVAL_AUGMENTED],
             "fact_verification": [PromptType.FACT_CHECKING, PromptType.SOURCE_ATTRIBUTION, PromptType.RETRIEVAL_AUGMENTED],
             "complex_reasoning": [PromptType.CHAIN_OF_THOUGHT, PromptType.TASK_DECOMPOSITION, PromptType.RE_RANKING],
-            
             # Complexity-based mapping
             "simple": [PromptType.INSTRUCTION, PromptType.ZERO_SHOT],
             "moderate": [PromptType.FEW_SHOT, PromptType.ROLE_BASED, PromptType.CHAIN_OF_THOUGHT],
             "complex": [PromptType.CHAIN_OF_THOUGHT, PromptType.TASK_DECOMPOSITION, PromptType.RETRIEVAL_AUGMENTED],
             "expert": [PromptType.ROLE_BASED, PromptType.RETRIEVAL_AUGMENTED, PromptType.FACT_CHECKING],
-            
             # Domain-based mapping
             "medical": [PromptType.ROLE_BASED, PromptType.DOCUMENT_CONTEXT, PromptType.FACT_CHECKING],
             "legal": [PromptType.ROLE_BASED, PromptType.SOURCE_ATTRIBUTION, PromptType.STRUCTURED_OUTPUT],
             "financial": [PromptType.ROLE_BASED, PromptType.FACT_CHECKING, PromptType.TABLE_KNOWLEDGE_BASE],
             "technical": [PromptType.ROLE_BASED, PromptType.FUNCTION_CALLING, PromptType.TOOL_USE],
             "academic": [PromptType.ROLE_BASED, PromptType.SOURCE_ATTRIBUTION, PromptType.RETRIEVAL_AUGMENTED],
-            
             # Entity-based mapping
             "PERSON": [PromptType.STRUCTURED_OUTPUT, PromptType.CONTEXT_AWARE],
             "ORGANIZATION": [PromptType.FACT_CHECKING, PromptType.SOURCE_ATTRIBUTION],
             "LOCATION": [PromptType.CONTEXT_AWARE, PromptType.RETRIEVAL_AUGMENTED],
             "DATE": [PromptType.STRUCTURED_OUTPUT, PromptType.TEMPORAL_REASONING],
-            "MONEY": [PromptType.STRUCTURED_OUTPUT, PromptType.FACT_CHECKING]
+            "MONEY": [PromptType.STRUCTURED_OUTPUT, PromptType.FACT_CHECKING],
         }
 
-    def _select_prompt_types_with_ensemble(
-        self, 
-        intent: QueryIntent, 
-        complexity: QueryComplexity, 
-        domain: str, 
-        entities: List[Dict], 
-        patterns: List[Dict]
-    ) -> List[PromptType]:
-        """Ensemble-based prompt type selection"""
-        
-        prompt_scores = {}
-        
-        # Initialize all prompt types with base score
-        for prompt_type in PromptType:
-            prompt_scores[prompt_type] = 0.0
-        
-        # Intent-based scoring
-        intent_prompts = self.prompt_type_mapping.get(intent.value, [])
-        for prompt in intent_prompts:
+    # -------------------------
+    # Private helper methods
+    # -------------------------
+    def _apply_mapping_score(self, key: str, weight: float, prompt_scores: Dict):
+        """Apply weight from mapping."""
+        for prompt in self.prompt_type_mapping.get(key, []):
             if hasattr(PromptType, prompt.name):
                 prompt_type = getattr(PromptType, prompt.name)
-                prompt_scores[prompt_type] += 3.0
-        
-        # Complexity-based scoring
-        complexity_name = complexity.name.lower()
-        complexity_prompts = self.prompt_type_mapping.get(complexity_name, [])
-        for prompt in complexity_prompts:
-            if hasattr(PromptType, prompt.name):
-                prompt_type = getattr(PromptType, prompt.name)
-                prompt_scores[prompt_type] += 2.0
-        
-        # Domain-based scoring
-        domain_prompts = self.prompt_type_mapping.get(domain, [])
-        for prompt in domain_prompts:
-            if hasattr(PromptType, prompt.name):
-                prompt_type = getattr(PromptType, prompt.name)
-                prompt_scores[prompt_type] += 2.5
-        
-        # Entity-based scoring
-        entity_types = list(set([e['label'] for e in entities]))
-        for entity_type in entity_types:
-            entity_prompts = self.prompt_type_mapping.get(entity_type, [])
-            for prompt in entity_prompts:
-                if hasattr(PromptType, prompt.name.replace(' ', '_')):
-                    try:
-                        prompt_type = getattr(PromptType, prompt.name.replace(' ', '_'))
-                        prompt_scores[prompt_type] += 1.5
-                    except AttributeError:
-                        continue
-        
-        # Pattern-based scoring
+                prompt_scores[prompt_type] += weight
+
+    def _apply_entity_scores(self, entities: List[Dict], prompt_scores: Dict):
+        """Apply entity-based scores."""
+        entity_labels = {e.get("label") for e in entities if "label" in e}
+        for label in entity_labels:
+            for prompt in self.prompt_type_mapping.get(label, []):
+                name = prompt.name.replace(" ", "_")
+                if hasattr(PromptType, name):
+                    prompt_scores[getattr(PromptType, name)] += 1.5
+
+    def _apply_pattern_scores(self, patterns: List[Dict], prompt_scores: Dict):
+        """Apply pattern-based weights dynamically."""
+        pattern_weights = {
+            "question": [(PromptType.QUESTION_ANSWERING, 2)],
+            "instruction": [(PromptType.INSTRUCTION, 2)],
+            "learning": [(PromptType.FEW_SHOT, 2), (PromptType.CHAIN_OF_THOUGHT, 1.5)],
+            "format_request": [(PromptType.STRUCTURED_OUTPUT, 3)],
+            "batch_processing": [(PromptType.LONG_CONTEXT, 2), (PromptType.TASK_DECOMPOSITION, 1.5)],
+            "reasoning_request": [(PromptType.CHAIN_OF_THOUGHT, 3), (PromptType.CLARIFICATION, 2)],
+            "interaction_request": [(PromptType.INTERACTIVE_AGENT, 3), (PromptType.USER_ASSISTANT_CHAT, 2)],
+        }
+
         for pattern in patterns:
-            pattern_type = pattern['type']
-            confidence = pattern['confidence']
-            
-            if pattern_type == 'question':
-                prompt_scores[PromptType.QUESTION_ANSWERING] += confidence * 2
-            elif pattern_type == 'instruction':
-                prompt_scores[PromptType.INSTRUCTION] += confidence * 2
-            elif pattern_type == 'learning':
-                prompt_scores[PromptType.FEW_SHOT] += confidence * 2
-                prompt_scores[PromptType.CHAIN_OF_THOUGHT] += confidence * 1.5
-            elif pattern_type == 'format_request':
-                prompt_scores[PromptType.STRUCTURED_OUTPUT] += confidence * 3
-            elif pattern_type == 'batch_processing':
-                prompt_scores[PromptType.LONG_CONTEXT] += confidence * 2
-                prompt_scores[PromptType.TASK_DECOMPOSITION] += confidence * 1.5
-            elif pattern_type == 'reasoning_request':
-                prompt_scores[PromptType.CHAIN_OF_THOUGHT] += confidence * 3
-                prompt_scores[PromptType.CLARIFICATION] += confidence * 2
-            elif pattern_type == 'interaction_request':
-                prompt_scores[PromptType.INTERACTIVE_AGENT] += confidence * 3
-                prompt_scores[PromptType.USER_ASSISTANT_CHAT] += confidence * 2
-        
-        # Apply complexity adjustments
+            for target, weight in pattern_weights.get(pattern.get("type"), []):
+                confidence = pattern.get("confidence", 1.0)
+                prompt_scores[target] += confidence * weight
+
+    def _apply_complexity_adjustments(self, complexity: QueryComplexity, prompt_scores: Dict):
+        """Adjust prompt weights based on complexity."""
         if complexity == QueryComplexity.SIMPLE:
-            # Boost simple prompts
             prompt_scores[PromptType.INSTRUCTION] += 1.0
             prompt_scores[PromptType.ZERO_SHOT] += 1.0
-            # Reduce complex prompts
             prompt_scores[PromptType.CHAIN_OF_THOUGHT] -= 0.5
             prompt_scores[PromptType.TASK_DECOMPOSITION] -= 1.0
-        
         elif complexity == QueryComplexity.EXPERT:
-            # Boost expert-level prompts
             prompt_scores[PromptType.ROLE_BASED] += 2.0
             prompt_scores[PromptType.RETRIEVAL_AUGMENTED] += 1.5
             prompt_scores[PromptType.FACT_CHECKING] += 1.5
-        
-        # Sort by score and return top 5
-        sorted_prompts = sorted(prompt_scores.items(), key=lambda x: x[1], reverse=True)
-        top_prompts = [prompt_type for prompt_type, score in sorted_prompts[:5] if score > 0]
-        print(f"top_prompts --> {top_prompts}")
-        return top_prompts if top_prompts else [PromptType.INSTRUCTION]
+
+    # -------------------------
+    # Main Ensemble Method
+    # -------------------------
+    def _select_prompt_types_with_ensemble(
+        self,
+        intent: QueryIntent,
+        complexity: QueryComplexity,
+        domain: str,
+        entities: List[Dict],
+        patterns: List[Dict]
+    ) -> List[PromptType]:
+        """Main ensemble-based prompt type selection with low cognitive complexity."""
+
+        prompt_scores = dict.fromkeys(PromptType, 0.0)
+
+        # Apply scoring factors
+        self._apply_mapping_score(intent.value, 3.0, prompt_scores)
+        self._apply_mapping_score(complexity.name.lower(), 2.0, prompt_scores)
+        self._apply_mapping_score(domain, 2.5, prompt_scores)
+        self._apply_entity_scores(entities, prompt_scores)
+        self._apply_pattern_scores(patterns, prompt_scores)
+        self._apply_complexity_adjustments(complexity, prompt_scores)
+
+        # Select top 5
+        top_prompts = [
+            ptype for ptype, score in sorted(prompt_scores.items(), key=lambda x: x[1], reverse=True)[:5] if score > 0
+        ]
+
+        logger.debug(f"Top selected prompts: {top_prompts}")
+        return top_prompts or [PromptType.INSTRUCTION]

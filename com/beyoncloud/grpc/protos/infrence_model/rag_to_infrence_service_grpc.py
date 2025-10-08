@@ -16,13 +16,13 @@ import com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2
 class RAGInfServiceBase(abc.ABC):
 
     @abc.abstractmethod
-    async def GetInfResponse(self, stream: 'grpclib.server.Stream[com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceRequest, com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceResponse]') -> None:
+    async def get_inf_response(self, stream: 'grpclib.server.Stream[com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceRequest, com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceResponse]') -> None:
         pass
 
     def __mapping__(self) -> typing.Dict[str, grpclib.const.Handler]:
         return {
-            '/raginfrence.RAGInfService/GetInfResponse': grpclib.const.Handler(
-                self.GetInfResponse,
+            '/raginfrence.RAGInfService/get_inf_response': grpclib.const.Handler(
+                self.get_inf_response,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceRequest,
                 com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceResponse,
@@ -33,9 +33,9 @@ class RAGInfServiceBase(abc.ABC):
 class RAGInfServiceStub:
 
     def __init__(self, channel: grpclib.client.Channel) -> None:
-        self.GetInfResponse = grpclib.client.UnaryUnaryMethod(
+        self.get_inf_response = grpclib.client.UnaryUnaryMethod(
             channel,
-            '/raginfrence.RAGInfService/GetInfResponse',
+            '/raginfrence.RAGInfService/get_inf_response',
             com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceRequest,
             com.beyoncloud.grpc.protos.infrence_model.rag_to_infrence_service_pb2.RagToInfrenceResponse,
         )

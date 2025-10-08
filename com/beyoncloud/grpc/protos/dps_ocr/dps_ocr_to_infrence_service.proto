@@ -44,5 +44,5 @@ message DpsOcrToInferenceResponse {
  
 // gRPC Service Definition for Infrense service
 service DpsOcrInfService {
-  rpc GetDpsOcrInfResponse(DpsOcrToInferenceRequest) returns (DpsOcrToInferenceResponse);
+  rpc get_dpsocr_inf_response(DpsOcrToInferenceRequest) returns (DpsOcrToInferenceResponse);
 }

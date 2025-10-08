@@ -233,12 +233,8 @@ class FileCreation:
             raise
 
 class FetchContent:
-
     def __init__(self):
-        # Intentionally empty for now.
-        # Reason: This class does not require instance state at construction
-        # and will initialize attributes lazily when the analysis runs.
-        # If future attributes are needed, initialize them here.
+        """No instance attributes required at initialization."""
         pass
 
     def fetch_schema_content(self, input_data: str, file_format: str):
@@ -247,122 +243,91 @@ class FetchContent:
         Returns JSON object (dict or list) if output_filetype is JSON,
         else returns string.
         """
-        extracted_data = None
+        if not input_data:
+            return None
 
-        if input_data:
-            delimiter = Delimiter.JSON
-            if FileFormats.XLSX == file_format:
-                delimiter = Delimiter.XLSX
-            elif FileFormats.CSV == file_format:
-                delimiter = Delimiter.CSV
-
-            try:
-                if FileFormats.CSV == file_format:
-                    output_data = self._clean_csv_response(input_data, delimiter)
-                    data_obj = output_data
-                else:
-                    output_data = self._clean_json_response(input_data, delimiter)
-                    if isinstance(output_data, (dict, list)):
-                        data_obj = output_data
-                    else:
-                        data_obj = json.loads(output_data)
-
-                print(f"output_data ------> {output_data}")
-                print(f"json_obj ---> {data_obj}")
-
-
-                extracted_data = data_obj   # return structured object
-            except json.JSONDecodeError as e:
-                print("JSONDecodeError:")
-                print(f"  Error: {e.msg}")          # error message
-                print(f"  Location: line {getattr(e, 'lineno', '?')}, column {getattr(e, 'colno', '?')}")
-                print(f"  Input type: {type(output_data)!r}")
-                if isinstance(output_data, str):
-                    # fallback to raw cleaned string
-                    extracted_data = {"raw_text": output_data}
-                else:
-                    raise ValueError("JSON Decoding error")
+        delimiter = self._get_delimiter(file_format)
+        try:
+            output_data = self._clean_content(input_data, file_format, delimiter)
+            extracted_data = self._parse_output(output_data)
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"JSONDecodeError: {e.msg}, line={getattr(e, 'lineno', '?')}, col={getattr(e, 'colno', '?')}"
+            )
+            extracted_data = self._handle_json_error(output_data)
 
         return extracted_data
 
-    def _clean_json_response(self, input_data: str, delimiter: str) -> str:
-        """Clean the response to extract valid JSON"""
-        
-        # Remove any text before the first { and after the last }
-        input_content = input_data.strip()
-        if delimiter in input_content:
-            input_content = self._extract_structure_content_only(input_data.strip(), delimiter)
-            
-        print(f"input_content -----------> {input_content}")
+    # -----------------------------
+    # Helper methods
+    # -----------------------------
+    def _get_delimiter(self, file_format: str) -> str:
+        """Map file format to corresponding delimiter."""
+        return {
+            FileFormats.XLSX: Delimiter.XLSX,
+            FileFormats.CSV: Delimiter.CSV,
+        }.get(file_format, Delimiter.JSON)
 
-        # Find first { and last }
-        start_idx = input_content.find('{')
-        end_idx = input_content.rfind('}')
-        
-        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-            json_str = input_content[start_idx:end_idx + 1]
-            return json_str
-        
-        # If no clear JSON structure, return the response as is
-        return input_content
+    def _clean_content(self, input_data: str, file_format: str, delimiter: str):
+        """Dispatch content cleaning by file type."""
+        clean_method = (
+            self._clean_csv_response
+            if file_format == FileFormats.CSV
+            else self._clean_json_response
+        )
+        return clean_method(input_data, delimiter)
+
+    def _parse_output(self, output_data: str):
+        """Convert cleaned string into a structured JSON object if possible."""
+        if isinstance(output_data, (dict, list)):
+            return output_data
+        try:
+            return json.loads(output_data)
+        except Exception:
+            return {"raw_text": output_data}
+
+    def _handle_json_error(self, output_data: str):
+        """Handle JSON parsing errors gracefully."""
+        if isinstance(output_data, str):
+            return {"raw_text": output_data}
+        raise ValueError("JSON Decoding error")
+
+    def _clean_json_response(self, input_data: str, delimiter: str) -> str:
+        """Clean the response to extract valid JSON."""
+        return self._clean_delimited_block(input_data, delimiter, "JSON")
 
     def _clean_csv_response(self, input_data: str, delimiter: str) -> str:
-        """Clean the response to extract valid JSON"""
-        
-        # Remove any text before the first { and after the last }
-        input_content = input_data.strip()
-        if delimiter in input_content:
-            input_content = self._extract_structure_content_only(input_data.strip(), delimiter)
-            
-        print(f"CSV input_content -----------> {input_content}")
+        """Clean the CSV-like response to extract valid JSON."""
+        return self._clean_delimited_block(input_data, delimiter, "CSV")
 
-        # Find first { and last }
-        start_idx = input_content.find('{')
-        end_idx = input_content.rfind('}')
-        
-        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-            json_str = input_content[start_idx:end_idx + 1]
-            return json_str
-        
-        # If no clear JSON structure, return the response as is
-        return input_content
+    def _clean_delimited_block(self, input_data: str, delimiter: str, log_label: str) -> str:
+        """Extract content between delimiters and isolate valid JSON."""
+        content = input_data.strip()
+        if delimiter in content:
+            content = self._extract_structure_content_only(content, delimiter)
+
+        logger.debug(f"{log_label} cleaned content -----------> {content}")
+        start_idx, end_idx = content.find("{"), content.rfind("}")
+        return content[start_idx:end_idx + 1] if start_idx != -1 < end_idx else content
 
     def _extract_structure_content_only(self, input_data: str, delimiter: str) -> str:
-
-        """
-        Extracts the first number from a string that is enclosed by '```' symbols.
-
-        Args:
-            input_string (str): The string to process.
-
-        Returns:
-            str: The extracted number as a string, or None if no match is found.
-        """
-        # The regex pattern looks for a sequence of digits (\d+) that
-        # is preceded and followed by '```' symbols.
-        match = re.search(fr'{delimiter}(.*?){delimiter}', input_data, re.DOTALL)
-        if match:
-            return match.group(1)
-        return CommonPatterns.EMPTY_SPACE
-
+        """Extract text enclosed within delimiters."""
+        match = re.search(fr"{delimiter}(.*?){delimiter}", input_data, re.DOTALL)
+        return match.group(1) if match else CommonPatterns.EMPTY_SPACE
 
     def fetch_ocr_content(self, filepath: str) -> str:
-
+        """Extracts text from OCR-generated JSON file."""
         if not filepath:
             logger.info("The given filepath is empty")
             return CommonPatterns.EMPTY_SPACE
 
         json_loader = JsonLoader()
         json_data = json_loader.get_json_object(filepath)
-
         if not json_data:
-            logger.info(f"The given file have empty data. Filepath is {filepath} ")
+            logger.info(f"The given file has empty data. Filepath: {filepath}")
             return CommonPatterns.EMPTY_SPACE
 
-        full_text = "".join(page.get("text", "") for page in json_data.get("results", []))
-        
-        return full_text
-
+        return "".join(page.get("text", "") for page in json_data.get("results", []))
 
 class PathValidator:
 

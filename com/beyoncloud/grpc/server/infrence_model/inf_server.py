@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class RAGInfService(RAGInfServiceBase):
-    async def GetInfResponse(self, stream: Stream[pb.RagToInfrenceRequest, pb.RagToInfrenceResponse]) -> None:
+    async def get_inf_response(self, stream: Stream[pb.RagToInfrenceRequest, pb.RagToInfrenceResponse]) -> None:
         request = await stream.recv_message()
         logger.info(f"Received request: {request}")
 

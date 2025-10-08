@@ -98,5 +98,5 @@ message RagToInfrenceResponse {
 
 // gRPC Service Definition for Infrense service
 service RAGInfService {
-  rpc GetInfResponse(RagToInfrenceRequest) returns (RagToInfrenceResponse);
+  rpc get_inf_response(RagToInfrenceRequest) returns (RagToInfrenceResponse);
 }
