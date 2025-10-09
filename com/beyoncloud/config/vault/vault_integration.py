@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 app = FastAPI()
 
 # Initialize Vault client
-client = hvac.Client(url="http://127.0.0.1:8200", token="your-vault-token")
+client = hvac.Client(url="http://127.0.0.1:8200")
 
 # Lifespan context manager for startup and shutdown
 @asynccontextmanager
