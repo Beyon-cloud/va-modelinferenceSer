@@ -48,7 +48,6 @@ input_data= """```json
 
 # Extract the number
 print(f"input_data --> {input_data}")
-#extracted_value = extract_number(input_data)
 extracted_value = extract_content(input_data)
 
 
