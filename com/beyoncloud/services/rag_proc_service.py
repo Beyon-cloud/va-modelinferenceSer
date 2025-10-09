@@ -152,7 +152,7 @@ class InfrenceService:
         entity_prompt_response = await self._generate_entity_prompt(structure_resp_process_request, schema_prompt_response)
         structure_input_data = self._build_structure_input(structure_resp_process_request, file_context)
         response = await self._invoke_rag_model(structure_input_data, entity_prompt_response)
-        generated_filepath = await self._generate_output_file(structure_resp_process_request, response)
+        generated_filepath = self._generate_output_file(structure_resp_process_request, response)
         return self._build_final_response(structure_resp_process_request, generated_filepath)
 
     # ---------------- Helper Methods ---------------- #
@@ -160,8 +160,8 @@ class InfrenceService:
     def _validate_and_load_file(self, req: Any) -> str:
         """Step 1: Validate and read OCR or text file content."""
         if not req.ocr_result_file_path:
-            logger.error("OCR result file path is empty")
-            raise ValueError("OCR result file path is empty")
+            logger.error("temp_structure_resp_process - OCR result file path is empty")
+            raise ValueError("temp_structure_resp_process - OCR result file path is empty")
 
         fetch_content = FetchContent()
         file_path = req.ocr_result_file_path.lower()
@@ -251,7 +251,7 @@ class InfrenceService:
         logger.info("Step 7 completed: Inference generated successfully")
         return response
 
-    async def _generate_output_file(self, req: Any, response: str) -> str:
+    def _generate_output_file(self, req: Any, response: str) -> str:
         """Step 8 & 9: Clean response, determine path, and write output file."""
         fetch_content = FetchContent()
         file_creation = FileCreation()

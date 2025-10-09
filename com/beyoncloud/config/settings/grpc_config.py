@@ -59,9 +59,9 @@ class GrpcServers:
     async def shutdown(self):
         # if you have stop() methods implemented on BaseGrpcServer
         if self.inf_service:
-            await self.inf_service.stop(timeout=5.0)
+            await self.inf_service.stop()
         if self.dps_ocr_service:
-            await self.dps_ocr_service.stop(timeout=5.0)
+            await self.dps_ocr_service.stop()
         if self._task:
             self._task.cancel()
             try:
@@ -92,12 +92,19 @@ class BaseGrpcServer:
         await self.server.start(self.host, self.port)
         self._server_task = asyncio.create_task(self.server.wait_closed())
 
-    async def stop(self, timeout: float = 5.0):
+    async def stop(self):
+        """Stop the gRPC server gracefully using an asyncio timeout context."""
         logger.info(f"[{self.service_name}] Stopping async gRPC server on {self.host}:{self.port}")
         self.server.close()
+
+        if not self._server_task:
+            logger.warning(f"[{self.service_name}] No active server task to wait for.")
+            return
+
         try:
-            if self._server_task:
-                await asyncio.wait_for(self._server_task, timeout)
+            # Use timeout context instead of function parameter
+            async with asyncio.timeout(5.0):
+                await self._server_task
             logger.info(f"[{self.service_name}] Shutdown complete.")
         except asyncio.TimeoutError:
             logger.warning(f"[{self.service_name}] Shutdown timeout exceeded. Forcing shutdown.")
