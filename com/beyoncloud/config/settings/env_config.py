@@ -110,6 +110,18 @@ COMMON_CONFIG = yaml_loader.get_yaml_object(common_config_file_path)
 tables_mapper_file_path = os.path.join(script_dir, "yaml", "tables_mapper.yaml")
 TABLE_MAPPER = yaml_loader.get_yaml_object(tables_mapper_file_path)
 
-# gRPC Server and Client Configuration
-grpc_config_file_path = os.path.join(script_dir, "yaml", "grpc_config.yaml")
-GRPC_CONFIG = yaml_loader.get_yaml_object(grpc_config_file_path)
+# ------------------ gRPC Server Default Config ------------------
+GRPC_SERVER_HOST=os.getenv(EnvKeys.GRPC_SERVER_HOST, "localhost").lower()
+GRPC_SERVER_PORT=int(os.getenv(EnvKeys.GRPC_SERVER_PORT, "50051"))
+
+# ------------------ Consul Config ------------------
+MODEL_INFERENCE_SERVICE=os.getenv(EnvKeys.MODEL_INFERENCE_SERVICE, "modelinference-service").lower()
+
+# ---------- Consul watcher settings (for grpc client) ----------
+CONSUL_USE_HTTPS=os.getenv(EnvKeys.CONSUL_USE_HTTPS, "N").upper()
+CONSUL_SERVICE_ENABLED_YN=os.getenv(EnvKeys.CONSUL_SERVICE_ENABLED_YN, "N").upper()
+CONSUL_HOST=os.getenv(EnvKeys.CONSUL_HOST, "consul")
+CONSUL_PORT=int(os.getenv(EnvKeys.CONSUL_PORT, "8500"))
+CONSUL_SERVICE_WATCHER_TIMEOUT = int(os.getenv(EnvKeys.CONSUL_SERVICE_WATCHER_TIMEOUT, 600))
+CONSUL_SERVICE_WATCHER_INTERVAL = int(os.getenv(EnvKeys.CONSUL_SERVICE_WATCHER_INTERVAL, 2))
+CONSUL_SERVICE_GRPC_PREFER=os.getenv(EnvKeys.CONSUL_SERVICE_GRPC_PREFER, "grpc_port")

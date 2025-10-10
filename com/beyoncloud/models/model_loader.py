@@ -1,5 +1,6 @@
 import torch
 import logging
+import os
 from transformers import AutoModelForCausalLM, AutoTokenizer,AutoModelForTokenClassification, pipeline
 import com.beyoncloud.config.settings.env_config as config
 from langchain import HuggingFacePipeline
@@ -24,13 +25,14 @@ class ModelRegistry:
         model_path = config.LLM_MODEL_PATH
         logger.info(f"Initializing model from: {model_path}")
         logger.info(f"Using device: {'GPU' if cls.device == "cuda" else 'CPU'}")
-
+        model_path = os.path.abspath(model_path)
         # Load tokenizer and model
         cls.llama_tokenizer = AutoTokenizer.from_pretrained(model_path)
         cls.llama_tokenizer.pad_token = cls.llama_tokenizer.eos_token
 
         cls.model = AutoModelForCausalLM.from_pretrained(
             model_path,
+            local_files_only=True,
             torch_dtype=torch.float16 if cls.device == "cuda" else torch.float32,
             device_map="auto" if cls.device == "cuda" else None,
             low_cpu_mem_usage=True

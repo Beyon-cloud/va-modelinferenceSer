@@ -31,6 +31,10 @@ app.include_router(v1_router, prefix="/api/v1")
 @app.get("/")
 def root():
     return {"message": "Welcome to the Virtual Assistant Service !"}
+    
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     

@@ -28,13 +28,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from com.beyoncloud.config.settings import env_config as env_config
 from com.beyoncloud.db.db_connection import sql_db_connection as sqlDbConn
-from com.beyoncloud.config.settings.grpc_config import grpc_servers
+from com.beyoncloud.config.settings.grpc_server import GrpcServer
 from com.beyoncloud.config.templates.template_loader import TemplateLoader
 
 logger = logging.getLogger(__name__)
 
-grpc_server = None
-grpc_processes = []
+grpc_server = GrpcServer()
 template_loader = TemplateLoader()
 
 @asynccontextmanager
@@ -55,7 +54,6 @@ async def lifespan(app: FastAPI):
         None
     """
 
-    global grpc_server, grpc_client, grpc_processes
     try:
         await template_loader.load_all_templates()
         logger.info("Configuration templates loaded successfully.")
@@ -64,7 +62,7 @@ async def lifespan(app: FastAPI):
         await sqlDbConn.initialize()
 
         logger.info("Starting gRPC all microservices")
-        await grpc_servers.start()
+        await grpc_server.start()
         logger.info("gRPC all microservices started successfully.")
 
         yield
@@ -74,4 +72,4 @@ async def lifespan(app: FastAPI):
 
         # gRPC client shutdown
         logger.info("Shutdown gRPC client instance")
-        await grpc_servers.shutdown()
+        await grpc_server.shutdown()
