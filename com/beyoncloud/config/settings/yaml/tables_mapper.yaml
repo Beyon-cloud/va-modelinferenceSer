@@ -37,13 +37,13 @@ schemas:
           created_at: created_at
 
       MtBcPromptParam:
-        table_name: mt_bc_prompt_param
+        table_name: mt_org_prompt_param
         columns:
           param_id: param_id
           uuid_id: external_id
           org_id: org_id
           domain_id: domain_id
-          task_id: task_id
+          task_id: document_typ
           prompt_id: prompt_id
           prompt_typ: prompt_typ
           param_key: param_key

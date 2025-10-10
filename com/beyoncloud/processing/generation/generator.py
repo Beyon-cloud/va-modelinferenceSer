@@ -118,13 +118,6 @@ class RagGeneratorProcess:
         full_context = structure_input_data.context_data
         print(f"fullContext -----------> {full_context}")
 
-        prompt_temp = await get_prompt_template1(
-            structure_input_data.domain_id, structure_input_data.document_type, 
-            structure_input_data.organization_id, structure_input_data.prompt_type,
-            structure_input_data.output_format
-        )
-        print(f"prompt_temp Output -->{prompt_temp["prompt_id"]} -  {prompt_temp["sys_tpl"]}")
-
         # Prompt Generation
         prompt_output = get_prompt_template(
             structure_input_data.domain_id, structure_input_data.document_type, 
