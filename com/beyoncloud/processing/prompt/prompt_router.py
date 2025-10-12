@@ -9,7 +9,7 @@ from datetime import datetime
 warnings.filterwarnings('ignore')
 from com.beyoncloud.utils.file_util import JsonLoader
 import com.beyoncloud.config.settings.env_config as config
-from com.beyoncloud.processing.prompt.prompt_template import get_prompt_template, get_prompt_input_variables
+from com.beyoncloud.processing.prompt.prompt_template import get_prompt_template_old, get_prompt_input_variables
 from com.beyoncloud.schemas.prompt_datamodel import QueryIntent, QueryComplexity, PromptType, QueryAnalysis, ModelPrediction
 from com.beyoncloud.processing.prompt.prompt_entity_recognition import AdvancedEntityRecognizer
 from com.beyoncloud.processing.prompt.prompt_intent_classification import IntentClassification
@@ -522,7 +522,7 @@ class DynamicPromptRouter:
         
         # Extract key information
         print(f"domain_id --> {domain_id} ; prompt_type.value --> {prompt_type.value}")
-        prompt_template = get_prompt_template(domain_id, prompt_type.value)
+        prompt_template = get_prompt_template_old(domain_id, prompt_type.value)
         prompt_input_variables = get_prompt_input_variables(domain_id, prompt_type.value)
 
         variable_map = {

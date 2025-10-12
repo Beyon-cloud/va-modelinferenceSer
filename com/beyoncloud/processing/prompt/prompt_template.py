@@ -145,7 +145,7 @@ def _build_prompt_object(prompt_json: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def get_prompt_template(domain_id: str, task: str, org_id: int, prompt_typ: str, out_typ: str = None) -> Dict[str, Any]:
+def get_prompt_template_old(domain_id: str, task: str, org_id: int, prompt_typ: str, out_typ: str = None) -> Dict[str, Any]:
     json_loader = JsonLoader()
     prompt_base_json = _get_prompt_data(domain_id=domain_id, task=task, org_id=org_id, prompt_typ=prompt_typ, json_loader=json_loader)
 
@@ -168,7 +168,7 @@ def get_prompt_template(domain_id: str, task: str, org_id: int, prompt_typ: str,
 
     return _build_prompt_object(prompt_json)
 
-async def get_prompt_template1(
+async def get_prompt_template(
     domain_id: str, 
     document_typ: str, 
     org_id: int, 

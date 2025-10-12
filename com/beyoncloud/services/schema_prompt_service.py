@@ -111,11 +111,10 @@ class SchemaPromptService:
             schema_prompt_request.desired_output_format == FileFormats.JSON 
             or schema_prompt_request.desired_output_format == FileFormats.XLSX
             or schema_prompt_request.desired_output_format == FileFormats.PDF
+            or schema_prompt_request.desired_output_format == FileFormats.CSV
         ):
             file_extension = FileExtension.JSON
             sys_gen_schema_temp = json.dumps(cleaned_response)
-        elif schema_prompt_request.desired_output_format == FileFormats.CSV:
-            file_extension = FileExtension.TEXT
 
         print(f"file_extension ---> {file_extension}")
         file_creation = FileCreation()

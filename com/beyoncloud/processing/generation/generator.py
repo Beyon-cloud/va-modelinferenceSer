@@ -1,35 +1,26 @@
 ﻿import logging
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-import torch
 import time
-from datetime import date
-from datetime import datetime
 import com.beyoncloud.config.settings.env_config as config
 from typing import List, Dict, Any
-from langchain.chains import ConversationalRetrievalChain
-from com.beyoncloud.models.model_loader import ModelRegistry
 from com.beyoncloud.schemas.rag_reqres_data_model import (
     ChatHistory, RagReqDataModel, 
     StructureInputData, UserInput,
     RagLogQryModel, RagLogQryModelBuilder
 )
-from langchain.schema import Document
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 from com.beyoncloud.processing.prompt.prompt_template import (
-    get_prompt_template,get_prompt_param, 
+    get_prompt_template_old,get_prompt_param, 
     get_prompt_input_variables,
-    SafeDict, get_temp_prompt_template, get_prompt_template1
+    SafeDict, get_temp_prompt_template, get_prompt_template
 )
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
 from com.beyoncloud.processing.prompt.prompt_processing import PromptGenerator
-from com.beyoncloud.utils.file_util import TextLoader
-from com.beyoncloud.common.constants import PromptType, CommonPatterns
+from com.beyoncloud.common.constants import CommonPatterns
 from com.beyoncloud.processing.prompt.prompt_generation.huggingface_llama_connect import HuggingFaceLlama3Client
 from com.beyoncloud.db.postgresql_impl import PostgresSqlImpl
 from com.beyoncloud.db.postgresql_connectivity import PostgreSqlConnectivity
 from com.beyoncloud.utils.date_utils import get_current_timestamp_string
+from com.beyoncloud.config.settings.table_mapper_config import TableSettings
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +42,7 @@ class RagGeneratorProcess:
         The class assumes that the language model (LLM) is preloaded into the `ModelRegistry.hf_llama_model_pipeline`.
         """
         self.prompt_generator = PromptGenerator()
+        self.table_settings = TableSettings()
 
     async def generate_answer(self, rag_req_data_model: RagReqDataModel, search_results: List[Dict[str, Any]]):
         """
@@ -119,18 +111,17 @@ class RagGeneratorProcess:
         print(f"fullContext -----------> {full_context}")
 
         # Prompt Generation
-        prompt_output = get_prompt_template(
+        prompt_output = await get_prompt_template(
             structure_input_data.domain_id, structure_input_data.document_type, 
             structure_input_data.organization_id, structure_input_data.prompt_type,
             structure_input_data.output_format
         )
+        param_result = prompt_output["prompt_param"]
+        
         prompt_id = prompt_output["prompt_id"]
         input_variables = prompt_output["input_variables"]
-        print(f"input_variables1 -->{prompt_id} -  {input_variables}")
-        param_result = await get_prompt_param(prompt_id)
-        print(f"param_result --> {param_result}")
-        print(f"output_type : {structure_input_data.output_format}")
 
+        print(f"prompt_temp Output 123 -->{prompt_output["prompt_id"]} -  {prompt_output["system_prompt_template"]} - {prompt_output["prompt_param"]}")
 
         llama3_client = HuggingFaceLlama3Client(
             api_key=config.HF_KEY,
@@ -145,11 +136,8 @@ class RagGeneratorProcess:
             "context": full_context,
             "output_type": structure_input_data.output_format
         }
-        for result in param_result:
-            param_key = getattr(result, "param_key", None)
-            param_value = getattr(result, "param_value", None)
-            if param_key is not None:
-                variable_map[param_key] = param_value
+        if param_result:
+            variable_map.update(param_result)
 
         system_prompt = prompt_output["system_prompt_template"].format_map(SafeDict(variable_map))
         user_prompt = prompt_output["user_prompt_template"].format_map(SafeDict(variable_map))
@@ -185,26 +173,25 @@ class RagGeneratorProcess:
         full_context = structure_input_data.context_data
 
         # Prompt Generation
-        prompt_output = get_prompt_template(
+        prompt_output = await get_prompt_template(
             structure_input_data.domain_id, structure_input_data.document_type, 
-            structure_input_data.organization_id, structure_input_data.prompt_type 
+            structure_input_data.organization_id, structure_input_data.prompt_type,
+            structure_input_data.output_format
         )
+        param_result = prompt_output["prompt_param"]
+
         final_prompt = prompt_output["prompt"]
         prompt_id = prompt_output["prompt_id"]
         input_variables = prompt_output["input_variables"]
         print(f"input_variables1 -->{prompt_id} -  {input_variables}")
-        param_result = await get_prompt_param(prompt_id)
         print(f"param_result --> {param_result}")
 
         variable_map = {
             "context": full_context,
             "output_type": structure_input_data.output_format
         }
-        for result in param_result:
-            param_key = getattr(result, "param_key", None)
-            param_value = getattr(result, "param_value", None)
-            if param_key is not None:
-                variable_map[param_key] = param_value
+        if param_result:
+            variable_map.update(param_result)
 
         # Dynamically build the inputs dictionary
         inputs = {var: variable_map[var] for var in input_variables}
@@ -244,11 +231,6 @@ class RagGeneratorProcess:
         full_context = structure_input_data.context_data
 
         # Prompt Generation
-        #prompt_output = get_prompt_template(
-        #    structure_input_data.domain_id, structure_input_data.document_type, 
-        #    structure_input_data.organization_id, structure_input_data.prompt_type 
-        #)
-
         prompt_output = get_temp_prompt_template(system_prompt, user_prompt, str_input_variables)
         final_prompt = prompt_output["prompt"]
         input_variables = prompt_output["input_variables"]
@@ -287,7 +269,7 @@ class RagGeneratorProcess:
         
         # Get context data
         full_context = structure_input_data.context_data
-        print(f"fullContext -----------> {full_context}")
+        print(f"temp_hf_response - fullContext -----------> {full_context}")
 
         # Prompt Generation
         prompt_output = get_temp_prompt_template(

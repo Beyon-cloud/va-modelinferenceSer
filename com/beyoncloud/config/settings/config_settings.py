@@ -115,12 +115,18 @@ class ConfigSettings:
                 print(f"prompt_id --> {rec.get("prompt_id")}")
                 print(f"sys_tpl --> {rec.get("sys_tpl")}")
                 print(f"usr_tpl --> {rec.get("usr_tpl")}")
+                print(f"mt_org_prompt_param --> {rec.get("mt_org_prompt_param")}")
+                
+                lst_param = rec.get("mt_org_prompt_param")
+                prompt_param = self._get_prompt_param(lst_param)
+
                 prompt_tmpl_config = {
                     "prompt_id": rec.get("prompt_id"),
                     "input_variables": rec.get("input_variables"),
-                    "sys_tpl": rec.get("sys_tpl"),
-                    "usr_tpl": rec.get("usr_tpl"),
-                    "template": rec.get("template")
+                    "system_prompt_template": rec.get("sys_tpl"),
+                    "user_prompt_template": rec.get("usr_tpl"),
+                    "template": rec.get("template"),
+                    "prompt_param": prompt_param
                 }
                 break
 
@@ -135,3 +141,12 @@ class ConfigSettings:
             )
 
         return prompt_tmpl_config
+
+    def _get_prompt_param(self, prompt_param_list: Any) -> Dict[str,str]:
+
+        prompt_param = {
+                    p["param_key"]: p.get("param_value")
+                    for p in prompt_param_list or []
+                    if p.get("param_key") is not None
+                }
+        return prompt_param
