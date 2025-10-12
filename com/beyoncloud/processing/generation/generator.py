@@ -118,9 +118,6 @@ class RagGeneratorProcess:
         )
         param_result = prompt_output["prompt_param"]
         
-        prompt_id = prompt_output["prompt_id"]
-        input_variables = prompt_output["input_variables"]
-
         print(f"prompt_temp Output 123 -->{prompt_output["prompt_id"]} -  {prompt_output["system_prompt_template"]} - {prompt_output["prompt_param"]}")
 
         llama3_client = HuggingFaceLlama3Client(
