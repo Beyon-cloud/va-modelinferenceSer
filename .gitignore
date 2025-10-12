@@ -39,7 +39,7 @@ eggs/
 # Docker files (optional)
 #Dockerfile*
 docker-compose*.yml
-.dockerignore
+#.dockerignore
 
 # Pytest cache
 .cache/

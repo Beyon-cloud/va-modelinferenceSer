@@ -67,7 +67,10 @@ class ConsulServiceWatcher:
     # ----------------------------------------------------------------------
     async def _watch_loop(self):
         """Main watcher loop — monitors Consul for service address updates."""
-        scheme = "https" if CONSUL_USE_HTTPS else "http"
+        if CONSUL_USE_HTTPS == "Y":
+            scheme = "https"
+        else:
+            scheme = "http"
         url = f"{scheme}://{CONSUL_HOST}:{CONSUL_PORT}/v1/catalog/service/{self.service_name}"
         logger.info(f"Starting Consul watcher for {self.service_name} at {url}")
         self.running = True
