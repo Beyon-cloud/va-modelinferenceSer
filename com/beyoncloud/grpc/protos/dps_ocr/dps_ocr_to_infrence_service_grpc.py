@@ -15,13 +15,13 @@ import com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2
 class DpsOcrInfServiceBase(abc.ABC):
 
     @abc.abstractmethod
-    async def get_dpsocr_inf_response(self, stream: 'grpclib.server.Stream[com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceRequest, com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceResponse]') -> None:
+    async def process(self, stream: 'grpclib.server.Stream[com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceRequest, com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceResponse]') -> None:
         pass
 
     def __mapping__(self) -> typing.Dict[str, grpclib.const.Handler]:
         return {
-            '/ocrinfrence.DpsOcrInfService/get_dpsocr_inf_response': grpclib.const.Handler(
-                self.get_dpsocr_inf_response,
+            '/ocrinfrence.DpsOcrInfService/process': grpclib.const.Handler(
+                self.process,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceRequest,
                 com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceResponse,
@@ -32,9 +32,9 @@ class DpsOcrInfServiceBase(abc.ABC):
 class DpsOcrInfServiceStub:
 
     def __init__(self, channel: grpclib.client.Channel) -> None:
-        self.get_dpsocr_inf_response = grpclib.client.UnaryUnaryMethod(
+        self.process = grpclib.client.UnaryUnaryMethod(
             channel,
-            '/ocrinfrence.DpsOcrInfService/get_dpsocr_inf_response',
+            '/ocrinfrence.DpsOcrInfService/process',
             com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceRequest,
             com.beyoncloud.grpc.protos.dps_ocr.dps_ocr_to_infrence_service_pb2.DpsOcrToInferenceResponse,
         )
