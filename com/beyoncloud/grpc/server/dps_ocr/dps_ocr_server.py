@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DpsOcrInfService(DpsOcrInfServiceBase):
-    async def get_dpsocr_inf_response(self, stream: Stream[pb.DpsOcrToInferenceRequest, pb.DpsOcrToInferenceResponse]) -> None:
+    async def process(self, stream: Stream[pb.DpsOcrToInferenceRequest, pb.DpsOcrToInferenceResponse]) -> None:
         request = await stream.recv_message()
         logger.info(f"Received request: {request}")
 
