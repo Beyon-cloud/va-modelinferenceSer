@@ -39,6 +39,8 @@ POSTGRES_URI = (
 
 SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "false").lower() == "true"
 
+BC_ROOT_PATH=os.getenv(EnvKeys.BC_ROOT_PATH, CommonPatterns.SPACE)
+
 # Uvicorn Details
 HOST = os.getenv(EnvKeys.UVICORN_HOST, "0.0.0.0")
 PORT = int(os.getenv(EnvKeys.UVICORN_PORT, 5009))
@@ -61,7 +63,8 @@ FAISS_INDEX_FILENAME=os.getenv("FAISS_INDEX_FILENAME")
 PROMPT_FOLDER_PATH = os.path.join(app_root, "com", "beyoncloud", "data", "prompt")
 PROMPT_FILENAME=os.getenv("PROMPT_FILENAME")
 
-SCHEMA_PROMPT_DIR_PATH = os.path.join(app_root, "com", "beyoncloud", "data", "prompt", "schema")
+SCHEMA_PROMPT_PATH=os.getenv("SCHEMA_PROMPT_DIR_PATH")
+SCHEMA_PROMPT_DIR_PATH = os.path.join(BC_ROOT_PATH, SCHEMA_PROMPT_PATH)
 SCHEMA_PROMPT_FILENAME=os.getenv("SCHEMA_PROMPT_FILENAME")
 
 CLARIDATA_DIR_PATH = os.path.join(app_root, "com", "beyoncloud", "data", "claridata")
@@ -79,7 +82,6 @@ LLM_MODEL_PATH = os.getenv("LLM_MODEL_PATH")
 
 # ------------------  Config ------------------
 
-BC_ROOT_PATH=os.getenv(EnvKeys.BC_ROOT_PATH, CommonPatterns.SPACE)
 CONFIG_FILE_PATH=os.getenv(EnvKeys.CONFIG_FILE_PATH, CommonPatterns.SPACE)
 BASE_PATH=f"{BC_ROOT_PATH}{CONFIG_FILE_PATH}"
 
