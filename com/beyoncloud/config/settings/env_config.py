@@ -63,11 +63,10 @@ FAISS_INDEX_FILENAME=os.getenv("FAISS_INDEX_FILENAME")
 PROMPT_FOLDER_PATH = os.path.join(app_root, "com", "beyoncloud", "data", "prompt")
 PROMPT_FILENAME=os.getenv("PROMPT_FILENAME")
 
-SCHEMA_PROMPT_PATH=os.getenv("SCHEMA_PROMPT_DIR_PATH")
-SCHEMA_PROMPT_DIR_PATH = os.path.join(BC_ROOT_PATH, SCHEMA_PROMPT_PATH)
+SCHEMA_PROMPT_DIR_PATH = os.path.join(BC_ROOT_PATH, os.getenv("SCHEMA_PROMPT_DIR_PATH"))
 SCHEMA_PROMPT_FILENAME=os.getenv("SCHEMA_PROMPT_FILENAME")
 
-CLARIDATA_DIR_PATH = os.path.join(app_root, "com", "beyoncloud", "data", "claridata")
+CLARIDATA_DIR_PATH = os.path.join(BC_ROOT_PATH, os.getenv("CLARIDATA_DIR_PATH"))
 CLARIDATA_FILENAME=os.getenv("CLARIDATA_FILENAME")
 
 FAISS_DIM=os.getenv("FAISS_DIM")

@@ -146,6 +146,7 @@ class InfrenceService:
 
 
     async def temp_structure_resp_process(self, structure_resp_process_request: StructureRespProcessRequest) -> Any:
+        structure_resp_process_request.desired_output_format=structure_resp_process_request.desired_output_format.lower()
         """Main orchestrator for structured response generation."""
         file_context = self._validate_and_load_file(structure_resp_process_request)
         schema_prompt_response = await self._generate_schema_prompt(structure_resp_process_request)
