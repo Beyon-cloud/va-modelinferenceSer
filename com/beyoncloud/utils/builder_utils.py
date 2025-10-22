@@ -40,6 +40,13 @@ class BuilderUtils:
         Maps logical fields → DB columns using schema.
         """
         builder = InfSchemaPromptLogBuilder()
+        metadata = {
+            "starttime": oth_val["starttime"],
+            "start_time": oth_val["start_time"],
+            "endtime": oth_val["endtime"],
+            "end_time": oth_val["end_time"],
+            "elapsed": oth_val["elapsed"]
+        }
 
         return (
             builder
@@ -57,6 +64,7 @@ class BuilderUtils:
             .with_status(oth_val["status"])
             .with_created_by(schema_prompt_request.user_id)
             .with_created_at(datetime.now(timezone.utc))
+            .with_metadata(metadata)
             .build()
         )
 

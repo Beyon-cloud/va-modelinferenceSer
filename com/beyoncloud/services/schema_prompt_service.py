@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import time
 from typing import Dict, List, Any, Optional
 from com.beyoncloud.schemas.prompt_gen_reqres_datamodel import (
     SchemaPromptRequest,SchemaPromptResponse, EntityPromptRequest, EntityPromptResponse, 
@@ -8,12 +9,11 @@ from com.beyoncloud.schemas.prompt_gen_reqres_datamodel import (
 )
 from com.beyoncloud.utils.file_util import TextLoader, FileCreation, PathValidator, FetchContent
 import com.beyoncloud.config.settings.env_config as config
-from com.beyoncloud.utils.date_utils import current_timestamp_trim
+from com.beyoncloud.utils.date_utils import get_current_timestamp_string, current_date_trim
 from com.beyoncloud.common.constants import FileExtension, Status, PromptType, CommonPatterns, FileFormats
 from com.beyoncloud.services.database_service import DataBaseService
-from com.beyoncloud.schemas.rag_reqres_data_model import StructureInputData, StructureInputDataBuilder
+from com.beyoncloud.schemas.rag_reqres_data_model import StructureInputDataBuilder
 from com.beyoncloud.processing.rag_process_impl import RagProcessImpl
-from com.beyoncloud.utils.date_utils import current_date_trim
 from com.beyoncloud.processing.prompt.prompt_generation.prompt_generation_impl import PromptGenerationImpl
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,12 @@ class SchemaPromptService:
         rag_process_impl = RagProcessImpl()
         response = None
         try:
+            starttime = get_current_timestamp_string()
+            start_time = time.time()
             response = await rag_process_impl.generate_structured_response(structure_input_data)
+            endtime = get_current_timestamp_string()
+            end_time = time.time()
+            elapsed = end_time - start_time
         except Exception as exc:
             # Log or re-raise depending on your application's logging strategy
             # For example: logger.exception("generate_structured_response failed")
@@ -111,7 +116,6 @@ class SchemaPromptService:
             schema_prompt_request.desired_output_format == FileFormats.JSON 
             or schema_prompt_request.desired_output_format == FileFormats.XLSX
             or schema_prompt_request.desired_output_format == FileFormats.PDF
-            or schema_prompt_request.desired_output_format == FileFormats.CSV
         ):
             file_extension = FileExtension.JSON
             sys_gen_schema_temp = json.dumps(cleaned_response)
@@ -154,7 +158,12 @@ class SchemaPromptService:
             "schema_dir_path" : output_dir_path,
             "schema_filename" : output_filename,
             "generated_filepath" : generated_filepath,
-            "schema_json" : sys_gen_schema_temp
+            "schema_json" : sys_gen_schema_temp,
+            "starttime": starttime,
+            "start_time": start_time,
+            "endtime": endtime,
+            "end_time": end_time,
+            "elapsed": elapsed
         }
         uuid_id = await self.db_service.save_or_update_schema_prompt_log(schema_prompt_request, oth_val)
         print(f"after save log table -- {uuid_id}")

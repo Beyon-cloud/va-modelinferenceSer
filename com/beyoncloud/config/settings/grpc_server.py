@@ -1,5 +1,6 @@
 ﻿import asyncio
 import logging
+import contextlib
 from grpclib.server import Server
 import com.beyoncloud.config.settings.env_config as env_config
 from com.beyoncloud.config.settings.table_mapper_config import load_table_mapping
@@ -72,6 +73,7 @@ class BaseGrpcServer:
         self.server = None
         self.prefer = prefer
         self.health_service = None
+        self._server_task = None  # ✅ background server task
 
     async def start(self):
         try:
@@ -89,13 +91,28 @@ class BaseGrpcServer:
 
             logger.info(f"[{self.service_name}] Starting gRPC server on {bind_host}:{port}")
             await self.server.start(bind_host, int(port))
-            await self.server.wait_closed()
+            
+            # ✅ Run wait_closed in the background so start() returns immediately
+            self._server_task = asyncio.create_task(self._serve_forever())
 
         except Exception as e:
             logger.error(f"❌ Error while starting {self.service_name} server: {e}", exc_info=True)
             raise
 
+    async def _serve_forever(self):
+        """Keep server alive until closed, handle graceful cancellation."""
+        try:
+            await self.server.wait_closed()
+        except asyncio.CancelledError:
+            # ✅ Expected during shutdown
+            logger.info(f"[{self.service_name}] Server task cancelled during shutdown.")
+            raise
+        except Exception as e:
+            logger.error(f"[{self.service_name}] Server error during serving: {e}", exc_info=True)
+            raise
+
     async def stop(self):
+        """Gracefully stop gRPC server and background task."""
         try:
             if not self.server:
                 logger.warning(f"[{self.service_name}] Server was never started.")
@@ -105,11 +122,28 @@ class BaseGrpcServer:
             if self.health_service:
                 self.health_service.set_status(self.service_name, "NOT_SERVING")
 
+            # ✅ Close server gracefully
             self.server.close()
-            await asyncio.wait_for(self.server.wait_closed())
-            logger.info(f"[{self.service_name}] Shutdown complete.")
+            
+            # ✅ Wait for shutdown but handle cancellation cleanly
+            try:
+                await asyncio.wait_for(self.server.wait_closed(), timeout=5)
+            except asyncio.TimeoutError:
+                logger.warning(f"[{self.service_name}] Shutdown timeout exceeded.")
+            except asyncio.CancelledError:
+                logger.info(f"[{self.service_name}] Server shutdown cancelled cleanly.")
+                raise
 
-        except asyncio.TimeoutError:
-            logger.warning(f"[{self.service_name}] Shutdown timeout exceeded.")
+            # ✅ Cancel background task if still running
+            if self._server_task and not self._server_task.done():
+                self._server_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._server_task
+            logger.info(f"[{self.service_name}] Shutdown complete.")
+        except asyncio.CancelledError:
+            # ✅ Ensure final cancellation is propagated
+            logger.info(f"[{self.service_name}] Shutdown cancelled during cleanup.")
+            raise
         except Exception as e:
             logger.error(f"[{self.service_name}] Unexpected shutdown error: {e}", exc_info=True)
+            raise

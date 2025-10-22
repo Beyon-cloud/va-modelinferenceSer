@@ -35,6 +35,7 @@ schemas:
           status: status
           created_by: created_by
           created_at: created_at
+          metadata: metadata
 
       MtBcPromptParam:
         table_name: mt_org_prompt_param

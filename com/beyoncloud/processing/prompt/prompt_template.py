@@ -178,6 +178,12 @@ async def get_prompt_template(
 
     config_settings = ConfigSettings()
     prompt_temp = await config_settings.get_prompt_template(domain_id,document_typ,org_id,prompt_typ,out_typ)
+    if prompt_temp:
+        custom_prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(prompt_temp["system_prompt_template"]),
+            HumanMessagePromptTemplate.from_template(prompt_temp["user_prompt_template"])
+        ])
+        prompt_temp["prompt"] = custom_prompt
     print(f"prompt_temp --> {prompt_temp}")
     return prompt_temp
 

@@ -92,6 +92,10 @@ class InfSchemaPromptLogBuilder:
         self._obj["created_at"] = aware_dt.replace(tzinfo=None)
         return self
 
+    def with_metadata(self, metadata: Optional[Dict]):
+        self._obj["metadata"] = metadata
+        return self
+
     def build(self) -> dict:
         """Finalize and validate the object"""
         if not self._obj.get("org_id"):

@@ -279,16 +279,22 @@ class FetchContent:
 
     def _parse_output(self, output_data: str):
         """Convert cleaned string into a structured JSON object if possible."""
+        print(f"_parse_output -----> : {output_data} -- {type(output_data)}")
         if isinstance(output_data, (dict, list)):
             return output_data
         try:
-            return json.loads(output_data)
-        except Exception:
+            # Remove JS-style comments before loading JSON
+            cleaned_output_data = re.sub(r'//.*', '', output_data)
+            print(f"_parse_output cleaned_output_data -----> : {cleaned_output_data}")
+            return json.loads(cleaned_output_data)
+        except Exception as e:
+            logger.error(f"Error load JSON data '_parse_output' : {e}")
             return {"raw_text": output_data}
 
     def _handle_json_error(self, output_data: str):
         """Handle JSON parsing errors gracefully."""
         if isinstance(output_data, str):
+            logger.error(f"Error load JSON data '_handle_json_error' : {e}")
             return {"raw_text": output_data}
         raise ValueError("JSON Decoding error")
 
@@ -303,16 +309,19 @@ class FetchContent:
     def _clean_delimited_block(self, input_data: str, delimiter: str, log_label: str) -> str:
         """Extract content between delimiters and isolate valid JSON."""
         content = input_data.strip()
+        print(f"Before clean ---> {content}")
         if delimiter in content:
             content = self._extract_structure_content_only(content, delimiter)
 
+        print(f"After clean ---> {content}")
         logger.debug(f"{log_label} cleaned content -----------> {content}")
         start_idx, end_idx = content.find("{"), content.rfind("}")
         return content[start_idx:end_idx + 1] if start_idx != -1 < end_idx else content
 
     def _extract_structure_content_only(self, input_data: str, delimiter: str) -> str:
         """Extract text enclosed within delimiters."""
-        match = re.search(fr"{delimiter}(.*?){delimiter}", input_data, re.DOTALL)
+        pattern = fr"{delimiter}\w*\n(.*?){delimiter}"
+        match = re.search(pattern, input_data, re.DOTALL)
         return match.group(1) if match else CommonPatterns.EMPTY_SPACE
 
     def fetch_ocr_content(self, filepath: str) -> str:

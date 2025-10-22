@@ -120,9 +120,13 @@ class ConfigSettings:
                 lst_param = rec.get("mt_org_prompt_param")
                 prompt_param = self._get_prompt_param(lst_param)
 
+                input_vars_list = []
+                if rec.get("input_variables"):
+                    input_vars_list = [v.strip() for v in rec.get("input_variables").split(",")]
+
                 prompt_tmpl_config = {
                     "prompt_id": rec.get("prompt_id"),
-                    "input_variables": rec.get("input_variables"),
+                    "input_variables": input_vars_list,
                     "system_prompt_template": rec.get("sys_tpl"),
                     "user_prompt_template": rec.get("usr_tpl"),
                     "template": rec.get("template"),
