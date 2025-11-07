@@ -243,7 +243,7 @@ class InfrenceService:
                 entity_response.input_variables
             )
         else:
-            response = await rag_process.temp_generate_structured_response(
+            response = await rag_process.temp_generate_structured_response_stream(
                 structure_input_data,
                 entity_response.system_prompt,
                 entity_response.user_prompt,

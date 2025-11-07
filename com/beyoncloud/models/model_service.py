@@ -14,6 +14,9 @@ class ModelServiceLoader:
         self.device = ModelRegistry.device
         self.llama_tokenizer = ModelRegistry.llama_tokenizer
 
+        self.model = ModelRegistry._model
+        self.tokenizer = ModelRegistry._tokenizer
+
     def get_dslim_ner_pipeline(self):
         return self.dslim_ner_pipeline
 
@@ -25,3 +28,6 @@ class ModelServiceLoader:
 
     def get_device(self):
         return self.device
+
+    def get_stream_model_and_tokenizer(self):
+        return self.model, self.tokenizer

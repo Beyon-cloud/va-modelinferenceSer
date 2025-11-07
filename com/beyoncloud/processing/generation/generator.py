@@ -1,5 +1,10 @@
 ﻿import logging
 import time
+import asyncio
+import torch
+import re
+import string
+import gc
 import com.beyoncloud.config.settings.env_config as config
 from typing import List, Dict, Any
 from com.beyoncloud.schemas.rag_reqres_data_model import (
@@ -195,12 +200,18 @@ class RagGeneratorProcess:
         print(f"Inputs : --> {inputs}")
         print(f"final_prompt --> {final_prompt}")
 
+        start_time = time.time()
         # Build runnable sequence (prompt | llm)
         chain = final_prompt | llm
         # Invoke asynchronously
-        response = await chain.ainvoke(
-            inputs
-        )
+        try:
+            response = await chain.ainvoke(inputs)
+        except Exception as e:
+            logger.error(f"Error during generation: {e}", exc_info=True)
+            raise
+
+        elapsed = time.time() - start_time
+        logger.info(f"⚡ Structured response generated in {elapsed:.2f}s")
 
         print("\n Structured response:\n", response)
         logger.info(f"Structured response --> {response}")
@@ -410,3 +421,161 @@ class RagGeneratorProcess:
         print(chat_history)
         return chat_history
 
+
+    async def generate_structured_response_stream(self, structure_input_data):
+        """
+        Streaming structured response generation (optimized to prevent CUDA OOM).
+        """
+
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        model, tokenizer = all_model_objects.get_stream_model_and_tokenizer()
+
+        if model is None or tokenizer is None:
+            raise ValueError("LLM model or tokenizer not loaded. Please check ModelRegistry.")
+
+        # Combine context and prepare final prompt
+        full_context = structure_input_data.context_data
+        prompt_output = await get_prompt_template(
+            structure_input_data.domain_id,
+            structure_input_data.document_type,
+            structure_input_data.organization_id,
+            structure_input_data.prompt_type,
+            structure_input_data.output_format
+        )
+
+        param_result = prompt_output["prompt_param"]
+        final_prompt = prompt_output["prompt"]
+        input_variables = prompt_output["input_variables"]
+
+        variable_map = {
+            "context": full_context,
+            "output_type": structure_input_data.output_format
+        }
+        if param_result:
+            variable_map.update(param_result)
+
+        inputs = {var: variable_map.get(var, "") for var in input_variables}
+        full_prompt = final_prompt.format(**inputs)
+
+        logger.info(f"🧠 Final prompt ready — approx {len(full_prompt.split())} tokens")
+
+        try:
+            # Encode once
+            input_ids = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+
+            # Generation parameters
+            max_new_tokens = config.MODEL_MAX_NEW_TOKENS  # reduce from 2048 to save memory
+            eos_token_id = tokenizer.eos_token_id or tokenizer.pad_token_id
+            start_time = time.time()
+
+            with torch.no_grad():
+                output_ids = model.generate(
+                    **input_ids,
+                    max_new_tokens=max_new_tokens,
+                    do_sample=True,
+                    temperature=config.MODEL_TEMPERATURE,
+                    top_p=config.MODEL_TOP_P,
+                    pad_token_id=eos_token_id,
+                    use_cache=True,
+                    repetition_penalty=config.REPETITION_PENALTY
+                )
+
+            # Decode only the newly generated tokens
+            new_tokens = output_ids[0][input_ids["input_ids"].shape[-1]:]
+            output_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+            elapsed = time.time() - start_time
+            logger.info(f"⚡ Generated {len(output_text.split())} tokens in {elapsed:.2f}s")
+
+            return output_text
+
+        except torch.cuda.OutOfMemoryError:
+            logger.error("💥 CUDA OOM — switching to CPU inference.")
+            torch.cuda.empty_cache()
+
+            # Fallback to CPU inference
+            model_cpu = model.to("cpu")
+            input_ids_cpu = tokenizer(full_prompt, return_tensors="pt")
+
+            with torch.no_grad():
+                output_ids = model_cpu.generate(
+                    **input_ids_cpu,
+                    max_new_tokens=config.MODEL_MAX_NEW_TOKENS,  # reduce further for CPU
+                    do_sample=True,
+                    temperature=config.MODEL_TEMPERATURE,
+                    top_p=config.MODEL_TOP_P,
+                    pad_token_id=eos_token_id
+                )
+
+            new_tokens = output_ids[0][input_ids_cpu["input_ids"].shape[-1]:]
+            output_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+            return output_text
+
+        finally:
+            # Cleanup GPU cache explicitly
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+    async def temp_generate_structured_response_stream(
+        self,
+        structure_input_data: StructureInputData,
+        system_prompt: str,
+        user_prompt: str,
+        str_input_variables: str
+    ):
+        """
+        Streaming structured response generation (optimized for low VRAM GPUs)
+        """
+
+        # Load model/tokenizer (sync)
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        model, tokenizer = all_model_objects.get_stream_model_and_tokenizer()
+
+        if model is None or tokenizer is None:
+            raise ValueError("LLM model or tokenizer not loaded. Please check ModelRegistry.")
+
+        full_context = structure_input_data.context_data
+        prompt_output = get_temp_prompt_template(system_prompt, user_prompt, str_input_variables)
+        final_prompt = prompt_output["prompt"]
+        input_variables = prompt_output["input_variables"]
+
+        variable_map = {
+            "context": full_context,
+            "output_type": structure_input_data.output_format,
+        }
+
+        inputs = {var: variable_map.get(var, "") for var in input_variables}
+        full_prompt = final_prompt.format(**inputs)
+
+        def _generate():
+            """Actual blocking generation wrapped for async execution."""
+            input_ids = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+
+            max_new_tokens = config.MODEL_MAX_NEW_TOKENS
+            eos_token_id = tokenizer.eos_token_id or tokenizer.pad_token_id
+
+            with torch.no_grad():
+                output_ids = model.generate(
+                    **input_ids,
+                    max_new_tokens=max_new_tokens,
+                    do_sample=True,
+                    temperature=config.MODEL_TEMPERATURE,
+                    top_p=config.MODEL_TOP_P,
+                    pad_token_id=eos_token_id,
+                    use_cache=True,
+                    repetition_penalty=config.REPETITION_PENALTY
+                )
+
+            new_tokens = output_ids[0][input_ids["input_ids"].shape[-1]:]
+            return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+        # ✅ Run blocking inference on a thread pool → SonarQube issue resolved
+        return await asyncio.to_thread(_generate)
+
+
+class SafeFormatter(string.Formatter):
+    def get_value(self, key, args, kwargs):
+        if isinstance(key, str):
+            return kwargs.get(key, f"{{{key}}}")
+        return super().get_value(key, args, kwargs)

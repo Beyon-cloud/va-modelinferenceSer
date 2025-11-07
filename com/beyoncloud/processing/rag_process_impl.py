@@ -196,8 +196,7 @@ class RagProcessImpl:
         if config.ENABLE_HF_INFRENCE_YN == "Y":
             response = await rag_generator_process.hf_response(structure_input_data)
         else:
-            response = await rag_generator_process.generate_structured_response(structure_input_data)
-
+            response = await rag_generator_process.generate_structured_response_stream(structure_input_data)
         
         endtime = get_current_timestamp_string()
         end_time = time.time()

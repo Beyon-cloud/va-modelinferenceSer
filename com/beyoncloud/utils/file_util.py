@@ -279,17 +279,78 @@ class FetchContent:
 
     def _parse_output(self, output_data: str):
         """Convert cleaned string into a structured JSON object if possible."""
-        print(f"_parse_output -----> : {output_data} -- {type(output_data)}")
+
+        # If already a Python dict or list, return directly
         if isinstance(output_data, (dict, list)):
             return output_data
+
         try:
-            # Remove JS-style comments before loading JSON
-            cleaned_output_data = re.sub(r'//.*', '', output_data)
+            # Step 1: Ensure it's a string
+            if not isinstance(output_data, str):
+                output_data = str(output_data)
+
+            # Step 2: Remove JavaScript-style comments (// ...)
+            cleaned_output_data = self.remove_json_comments(output_data)
+
+            # Step 3: Optionally strip leading/trailing spaces
+            cleaned_output_data = cleaned_output_data.strip()
+
             print(f"_parse_output cleaned_output_data -----> : {cleaned_output_data}")
+
+            # Step 5: Try parsing as JSON
             return json.loads(cleaned_output_data)
-        except Exception as e:
-            logger.error(f"Error load JSON data '_parse_output' : {e}")
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error in '_parse_output': {e}")
+            # Optionally print a small snippet for debugging
+            snippet = cleaned_output_data[:200].replace("\n", "\\n")
+            logger.debug(f"Offending JSON snippet: {snippet}")
             return {"raw_text": output_data}
+
+        except Exception as e:
+            logger.error(f"Error load JSON data '_parse_output': {e}")
+            return {"raw_text": output_data}
+
+    def remove_json_comments(self, text: str) -> str:
+        result = []
+        in_string = False
+        escaped = False
+        i = 0
+        length = len(text)
+
+        while i < length:
+            char = text[i]
+
+            # Handle quote toggling
+            if char == '"' and not escaped:
+                in_string = not in_string
+                result.append(char)
+                i += 1
+                continue
+
+            # Handle escaping (e.g. \" inside strings)
+            if char == "\\" and not escaped:
+                escaped = True
+                result.append(char)
+                i += 1
+                continue
+            else:
+                escaped = False
+
+            # Detect comment start only when NOT in string
+            if not in_string and char == '/' and i + 1 < length and text[i + 1] == '/':
+                # Skip everything till newline
+                i += 2
+                while i < length and text[i] != '\n':
+                    i += 1
+                continue
+
+            # Default: append character
+            result.append(char)
+            i += 1
+
+        return ''.join(result)
+
 
     def _handle_json_error(self, output_data: str):
         """Handle JSON parsing errors gracefully."""
