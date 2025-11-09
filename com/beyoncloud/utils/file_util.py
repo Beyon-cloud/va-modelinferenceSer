@@ -380,10 +380,25 @@ class FetchContent:
         return content[start_idx:end_idx + 1] if start_idx != -1 < end_idx else content
 
     def _extract_structure_content_only(self, input_data: str, delimiter: str) -> str:
-        """Extract text enclosed within delimiters."""
-        pattern = fr"{delimiter}\w*\n(.*?){delimiter}"
+        """Extract text enclosed within ```json ... ``` block."""
+        delimiter_escaped = re.escape(delimiter)
+
+        # Match ```json\n ... ```
+        pattern = fr"{delimiter_escaped}json\s*\n(.*?){delimiter_escaped}"
         match = re.search(pattern, input_data, re.DOTALL)
-        return match.group(1) if match else CommonPatterns.EMPTY_SPACE
+
+        if match:
+            return match.group(1).strip()
+
+        # Fallback: try plain ```...```
+        pattern_no_lang = fr"{delimiter_escaped}(.*?){delimiter_escaped}"
+        match = re.search(pattern_no_lang, input_data, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+
+        # Final fallback: return everything
+        return input_data.strip()
+
 
     def fetch_ocr_content(self, filepath: str) -> str:
         """Extracts text from OCR-generated JSON file."""
