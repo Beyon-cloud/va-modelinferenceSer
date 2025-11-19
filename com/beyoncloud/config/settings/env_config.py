@@ -78,6 +78,7 @@ HF_MODEL_NAME = os.getenv("HF_MODEL_NAME")
 TEMP_FLOW_YN = os.getenv("TEMP_FLOW_YN")
 
 LLM_MODEL_PATH = os.getenv("LLM_MODEL_PATH")
+BASE_MODEL_PATH = os.getenv("BASE_MODEL_PATH")
 
 # ------------------  Config ------------------
 

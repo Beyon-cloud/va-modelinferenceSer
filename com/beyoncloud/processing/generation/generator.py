@@ -15,7 +15,8 @@ from com.beyoncloud.schemas.rag_reqres_data_model import (
 from com.beyoncloud.processing.prompt.prompt_template import (
     get_prompt_template_old,get_prompt_param, 
     get_prompt_input_variables,
-    SafeDict, get_temp_prompt_template, get_prompt_template
+    SafeDict, get_temp_prompt_template, get_prompt_template,
+    get_tokenizer_prompt
 )
 from com.beyoncloud.models.model_service import ModelServiceLoader
 from com.beyoncloud.models import model_singleton
@@ -149,7 +150,7 @@ class RagGeneratorProcess:
                     user_prompt=user_prompt,
                     timeout=60,
                     temperature=0.1,
-                    max_tokens=2048
+                    max_tokens=3072
                 )
 
      
@@ -310,7 +311,7 @@ class RagGeneratorProcess:
                     user_prompt=final_user_prompt,
                     timeout=60,
                     temperature=0.1,
-                    max_tokens=2048
+                    max_tokens=3072
                 )
         endtime = get_current_timestamp_string()
         end_time = time.time()
@@ -422,7 +423,7 @@ class RagGeneratorProcess:
         return chat_history
 
 
-    async def generate_structured_response_stream(self, structure_input_data):
+    async def generate_structured_response_stream1(self, structure_input_data):
         """
         Streaming structured response generation (optimized to prevent CUDA OOM).
         """
@@ -546,32 +547,150 @@ class RagGeneratorProcess:
         }
 
         inputs = {var: variable_map.get(var, "") for var in input_variables}
-        full_prompt = final_prompt.format(**inputs)
+        #full_prompt = final_prompt.format(**inputs)
+        # ---------------------------
+        # 🧩 Build Chat Messages
+        # ---------------------------
+        chat_prompt = get_tokenizer_prompt(prompt_output,inputs, True, tokenizer)
+
+        logger.info(f"🧠 Final formatted chat prompt — approx {len(chat_prompt.split())} tokens")
 
         def _generate():
             """Actual blocking generation wrapped for async execution."""
-            input_ids = tokenizer(full_prompt, return_tensors="pt").to(model.device)
 
-            max_new_tokens = config.MODEL_MAX_NEW_TOKENS
+            input_ids = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
             eos_token_id = tokenizer.eos_token_id or tokenizer.pad_token_id
+            max_new_tokens = config.MODEL_MAX_NEW_TOKENS
+
+            start_time = time.time()
 
             with torch.no_grad():
                 output_ids = model.generate(
                     **input_ids,
                     max_new_tokens=max_new_tokens,
-                    do_sample=True,
-                    temperature=config.MODEL_TEMPERATURE,
-                    top_p=config.MODEL_TOP_P,
+                    temperature=config.MODEL_TEMPERATURE or 0.2,
+                    top_p=config.MODEL_TOP_P or 0.9,
+                    repetition_penalty=config.REPETITION_PENALTY or 1.1,
+                    do_sample=False,
                     pad_token_id=eos_token_id,
-                    use_cache=True,
-                    repetition_penalty=config.REPETITION_PENALTY
+                    use_cache=True
                 )
 
             new_tokens = output_ids[0][input_ids["input_ids"].shape[-1]:]
-            return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+            output_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+            elapsed = time.time() - start_time
+            logger.info(f"⚡ Generated {len(output_text.split())} tokens in {elapsed:.2f}s")
+
+            # Safely Free GPU Memory After LLM Use
+            # Delete intermediate tensors and clear cache
+            del input_ids
+            del output_ids
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            gc.collect()
+
+            return output_text
 
         # ✅ Run blocking inference on a thread pool → SonarQube issue resolved
         return await asyncio.to_thread(_generate)
+
+
+    async def generate_structured_response_stream(self, structure_input_data):
+        """
+        Streaming structured response generation with LLaMA-3 chat formatting.
+        """
+
+        all_model_objects = model_singleton.modelServiceLoader or ModelServiceLoader()
+        model, tokenizer = all_model_objects.get_stream_model_and_tokenizer()
+
+        if model is None or tokenizer is None:
+            raise ValueError("LLM model or tokenizer not loaded. Please check ModelRegistry.")
+
+        # Get domain-specific prompt
+        prompt_output = await get_prompt_template(
+            structure_input_data.domain_id,
+            structure_input_data.document_type,
+            structure_input_data.organization_id,
+            structure_input_data.prompt_type,
+            structure_input_data.output_format
+        )
+
+        full_context = structure_input_data.context_data
+        param_result = prompt_output["prompt_param"]
+        final_prompt = prompt_output["prompt"]
+        input_variables = prompt_output["input_variables"]
+        user_prompt = prompt_output["user_prompt_template"]
+        
+
+        variable_map = {"context": full_context, "output_type": structure_input_data.output_format}
+        if param_result:
+            variable_map.update(param_result)
+
+        inputs = {var: variable_map.get(var, "") for var in input_variables}
+
+        # ---------------------------
+        # 🧩 Build Chat Messages
+        # ---------------------------
+        chat_prompt = get_tokenizer_prompt(prompt_output,inputs, True, tokenizer)
+
+        logger.info(f"🧠 Final formatted chat prompt — approx {len(chat_prompt.split())} tokens")
+
+        # ---------------------------
+        # 🚀 Model Generation
+        # ---------------------------
+        try:
+            input_ids = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
+            eos_token_id = tokenizer.eos_token_id or tokenizer.pad_token_id
+            max_new_tokens = config.MODEL_MAX_NEW_TOKENS
+
+            start_time = time.time()
+
+            with torch.no_grad():
+                output_ids = model.generate(
+                    **input_ids,
+                    max_new_tokens=max_new_tokens,
+                    temperature=config.MODEL_TEMPERATURE or 0.2,
+                    top_p=config.MODEL_TOP_P or 0.9,
+                    repetition_penalty=config.REPETITION_PENALTY or 1.1,
+                    do_sample=False,
+                    pad_token_id=eos_token_id,
+                    use_cache=True
+                )
+
+            new_tokens = output_ids[0][input_ids["input_ids"].shape[-1]:]
+            output_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+            elapsed = time.time() - start_time
+            logger.info(f"⚡ Generated {len(output_text.split())} tokens in {elapsed:.2f}s")
+
+            return output_text
+
+        except torch.cuda.OutOfMemoryError:
+            logger.error("💥 CUDA OOM — switching to CPU inference.")
+            torch.cuda.empty_cache()
+
+            model_cpu = model.to("cpu")
+            input_ids_cpu = tokenizer(chat_prompt, return_tensors="pt")
+
+            with torch.no_grad():
+                output_ids = model_cpu.generate(
+                    **input_ids_cpu,
+                    max_new_tokens=config.MODEL_MAX_NEW_TOKENS // 2,
+                    temperature=config.MODEL_TEMPERATURE or 0.2,
+                    top_p=config.MODEL_TOP_P or 0.9,
+                    pad_token_id=eos_token_id,
+                    do_sample=False,
+                )
+
+            new_tokens = output_ids[0][input_ids_cpu["input_ids"].shape[-1]:]
+            output_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+            return output_text
+
+        finally:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
 
 
 class SafeFormatter(string.Formatter):

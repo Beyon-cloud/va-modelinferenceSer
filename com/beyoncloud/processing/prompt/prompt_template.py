@@ -179,10 +179,16 @@ async def get_prompt_template(
     config_settings = ConfigSettings()
     prompt_temp = await config_settings.get_prompt_template(domain_id,document_typ,org_id,prompt_typ,out_typ)
     if prompt_temp:
-        custom_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(prompt_temp["system_prompt_template"]),
-            HumanMessagePromptTemplate.from_template(prompt_temp["user_prompt_template"])
-        ])
+        if prompt_temp["template"]:
+            custom_prompt = PromptTemplate(
+                template=prompt_temp["template"],
+                input_variables=prompt_temp["input_variables"]
+            )
+        else:
+            custom_prompt = ChatPromptTemplate.from_messages([
+                SystemMessagePromptTemplate.from_template(prompt_temp["system_prompt_template"]),
+                HumanMessagePromptTemplate.from_template(prompt_temp["user_prompt_template"])
+            ])
         prompt_temp["prompt"] = custom_prompt
     print(f"prompt_temp --> {prompt_temp}")
     return prompt_temp
@@ -275,3 +281,23 @@ def get_schema(prompts: Dict[str, str]) -> str:
     ])
 
     return chat_prompt
+
+def get_tokenizer_prompt(prompt_output: Dict[str, Any], inputs: Dict[str, Any], is_instruct: bool, tokenizer=None ) -> Any:
+
+    if prompt_output:
+
+        system_prompt = prompt_output["system_prompt_template"]
+        user_prompt = prompt_output["user_prompt_template"]
+
+        user_prompt = user_prompt.format(**inputs)
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # Apply the LLaMA chat template correctly
+        chat_prompt = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+        return chat_prompt
